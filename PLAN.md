@@ -109,7 +109,7 @@ Three branches, exactly as published:
 - Uses **full audio samples**, not the provided normalized segments
 - Reported: 83.3% accuracy/precision/recall/F1 on the ADReSS held-out test set
 - Also performs MMSE regression by transfer learning (freeze layers, swap output head,
-  lr 0.001, MSE loss). **Out of scope for us** — classification only.
+  lr 0.001, MSE loss). **Out of scope for us** — classification only. See section E.
 
 Our constraint is unchanged: ADReSS test labels are redacted on our disk, so we
 evaluate by CV on the 108 labeled training subjects and never compare to 83.3%.
@@ -147,11 +147,106 @@ labeled data, then what needs new data collection.
 
 ---
 
-## D. Decisions needed before step 1
+## D. Settled decisions
 
-1. **Will you register at nhats.org** to test the label download? Free and public.
-   If yes, step 0 runs first and may remove the annotation work entirely.
-2. **ViT-B/16 at 512px as the working baseline**, ViT-L/16 only if B/16 justifies it.
-   Agreed earlier. This is a deviation from the paper and is recorded as one.
-3. **Colab or Kaggle** — either is fine; pick one so checkpoint plumbing is written once.
-4. **Speech MMSE regression is out of scope.** Confirm.
+| Decision | Choice |
+|---|---|
+| NHATS labels | User has public-tier access; survey files being downloaded. `scripts/check_nhats_labels.py` verifies them. Hand annotation is the fallback only if the check fails. |
+| Clock backbone | **ViT-B/16 at 512px** as the working baseline; ViT-L/16 only if B/16's results justify the GPU cost. Recorded as a deviation from the paper. |
+| GPU platform | **Kaggle**, private dataset. 30 free GPU hours/week; sessions survive disconnects. |
+| Local Python | **3.13**, not 3.11. Windows Smart App Control (`VerifiedAndReputablePolicyState = 1`) blocks freshly installed native wheels on the 3.11 install; 3.13 already has working pandas and numpy. |
+| Severity / staging | **Not produced.** Binary labels only, per modality. |
+| Speech MMSE regression | **Out of scope**, per the line above. |
+| Eye task selection | Run the ablation over all 12 tasks and let the data choose; do not fix 3 by hand. Training is CPU-cheap at n=20. |
+| Motor conditions | Keep all 4. The whole battery is 2 minutes of tapping. |
+| Data handling | NHATS Conditions of Use forbid uploading the data to Claude. All NHATS work happens via scripts the user runs locally; only aggregate summaries are shared. |
+
+---
+
+## E. Severity and staging — explicitly excluded
+
+The system reports **binary labels only**. It does not output mild / moderate / severe,
+an MMSE estimate, or any other severity measure.
+
+**Why.** No dataset here carries a stage label. The only severity signal available
+anywhere is MMSE (present in ADReSS and in ADEM_TEST metadata), and predicting it is
+unreliable for staging: Sarawgi et al. report **RMSE 4.60** on MMSE regression, while
+the conventional stage bands are only ~5-6 MMSE points wide. The error is nearly the
+width of a whole stage, so a predicted stage would frequently be wrong by one band.
+
+Reporting a stage we cannot support would be an invented threshold, which this project
+forbids everywhere else. Excluded by decision, not by oversight.
+
+---
+
+## F. Metrics reported per modality
+
+Every modality reports the same set, with the evaluation protocol stated beside it.
+
+| Metric | Why it is here |
+|---|---|
+| **Balanced accuracy** | Primary headline. Plain accuracy is misleading when classes are uneven, which they are for NHATS (mostly cognitively normal). |
+| **Precision, recall, F1** | F1 balances false alarms against missed cases. Sarawgi reports these, so speech stays comparable in form. |
+| **AUC** | Threshold-independent; Koppelmans reports it for motor. |
+| **95% confidence interval** | Mandatory. At n=20 a point estimate alone is misleading — the interval is the honest result. |
+| **n and CV protocol** | Stated inline with every number, so no figure can be quoted without its context. |
+
+Confidence intervals: bootstrap over subjects for CV estimates; Wilson interval for
+single held-out proportions.
+
+### The reported result
+
+Four independent rows. No fifth row, no average.
+
+```
+MODALITY   TASK                BAL ACC   F1    AUC   95% CI     PROTOCOL
+Speech     AD vs control         ?       ?      ?    ?-?        5-fold CV, n=108
+Clock      dementia flag         ?       ?      ?    ?-?        held-out 1,000
+Eye        AD vs NC              ?       ?      ?    ?-?        LOSO, n=20
+Motor      (features only)       -       -      -    -          no labels exist
+```
+
+**No single "overall accuracy" is computed or claimed.** Training a classifier over the
+four scores would require a cohort in which the same people took all four tests. No such
+cohort exists here: NHATS, ADReSS and ADEM share zero participants. Duplicating rows to
+manufacture one would put copies of the same subject in both train and test, which is
+data leakage and inflates accuracy artificially.
+
+The statement that accompanies the table:
+
+> Four independent screens, each validated on its own cohort. No combined score is
+> claimed, because no cohort exists in which the same people took all four tests.
+
+A genuine overall number would require a prospective pilot: 30-50 participants who
+complete all four assessments with a known diagnosis. That is a valid next phase, not
+something derivable from current data.
+
+---
+
+## G. LLM summary layer
+
+Input: the four structured results — each a binary label, a probability, and the
+metrics from section F. Nothing else.
+
+Output: readable prose describing what each modality found and how reliable it is.
+
+Plus one **stated combination rule**, written by us and not learned:
+
+> 2 or more of 4 modalities flagged -> recommend clinical follow-up.
+
+The rule's threshold is documented and carries **no accuracy claim**, because it was not
+fitted to data.
+
+Hard constraints, enforced in code (unchanged from PROJECT_OUTLINE.md, with staging
+added):
+
+1. Runs only after all four assessments complete.
+2. Receives structured input; summarizes it as evidence.
+3. Must not weight, average, fuse or otherwise combine modalities mathematically.
+4. Must not produce a diagnosis, a severity stage, or introduce a threshold beyond the
+   documented rule above.
+5. Output is schema-validated; any fused score, stage name or diagnostic claim is
+   rejected rather than post-edited.
+
+Model: local open-source 7-8B via Ollama, keeping patient data on the machine. Hosted
+API is a fallback if quality is insufficient.
