@@ -1,0 +1,21 @@
+# Datasets and papers — large, not ours to redistribute
+datasets/
+Paper/
+
+# Trained model artifacts — come from Colab/Kaggle, not git
+models/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
