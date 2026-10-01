@@ -1,4 +1,4 @@
-# Project Outline — Alzheimer's Multimodal Screening
+c# Project Outline — Alzheimer's Multimodal Screening
 
 Four **independent** modality assessments. No shared label space, no numerical fusion,
 no invented thresholds. Rule for each: **Paper → Dataset → Published protocol →

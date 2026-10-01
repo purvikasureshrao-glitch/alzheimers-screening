@@ -1,4 +1,4 @@
-"""
+r"""
 Check that the NHATS Sample Person survey files contain the two label columns
 used by Bone et al. (2025), and that they join to the clock images we have.
 
@@ -6,7 +6,7 @@ PRIVACY: this script runs entirely on your machine and prints ONLY aggregate
 counts. No SPID, filename, or participant row is ever displayed. NHATS
 Conditions of Use permit aggregate statistical summaries.
 
-Run:  py -3.11 scripts\check_nhats_labels.py
+Run:  py -3.13 scripts\check_nhats_labels.py
 """
 
 import re
@@ -18,7 +18,7 @@ from pathlib import Path
 try:
     import pandas as pd
 except ImportError:
-    sys.exit("pandas is missing. Run:  py -3.11 -m pip install pandas pyreadstat")
+    sys.exit("pandas is missing. Run:  py -3.13 -m pip install pandas")
 
 IMAGES_DIR = Path(r"D:\Alzheimers\datasets\NHATS")
 SURVEY_DIR = Path(r"D:\Alzheimers\datasets\NHATS\survey")
@@ -82,22 +82,36 @@ def main():
     # ---------- 2. survey files ----------
     print("\n[2] SURVEY FILES")
     if not SURVEY_DIR.exists():
-        sys.exit(f"\n    MISSING: {SURVEY_DIR}\n    Put the SP .dta files there and re-run.")
+        sys.exit(f"\n    MISSING: {SURVEY_DIR}")
 
-    survey = sorted(list(SURVEY_DIR.glob("*.dta")) + list(SURVEY_DIR.glob("*.sas7bdat")))
-    if not survey:
-        sys.exit(f"    No .dta or .sas7bdat files in {SURVEY_DIR}")
+    # Read the SP (Sample Person) .dta straight out of each Stata release zip,
+    # wherever it sits under survey/ (no extraction needed).
+    zips_by_round = {}
+    for zp in SURVEY_DIR.rglob("*STATA*.zip"):
+        rnd = round_of(zp.name)
+        if rnd is not None:
+            zips_by_round[rnd] = zp
+    if not zips_by_round:
+        sys.exit(f"    No Stata release zips under {SURVEY_DIR}")
+
+    missing = sorted(set(images_by_round) - set(zips_by_round))
+    if missing:
+        print(f"    MISSING survey rounds that have clock images: {missing}")
 
     found_any = False
-    for sp in survey:
-        rnd = round_of(sp.name)
+    for rnd in sorted(zips_by_round):
+        zp = zips_by_round[rnd]
         try:
-            if sp.suffix == ".dta":
-                df = pd.read_stata(sp, convert_categoricals=False)
-            else:
-                df = pd.read_sas(sp)
+            with zipfile.ZipFile(zp) as z:
+                sp_names = [n for n in z.namelist()
+                            if re.search(r"_SP_File.*\.dta$", n, re.I)]
+                if not sp_names:
+                    print(f"    round {rnd:>2}  no SP .dta inside {zp.name}")
+                    continue
+                with z.open(sp_names[0]) as fh:
+                    df = pd.read_stata(fh, convert_categoricals=False)
         except Exception as e:
-            print(f"    round {str(rnd):>2}  COULD NOT READ: {type(e).__name__}")
+            print(f"    round {rnd:>2}  COULD NOT READ: {type(e).__name__}")
             continue
 
         cols = {c.lower(): c for c in df.columns}

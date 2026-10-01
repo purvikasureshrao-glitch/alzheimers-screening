@@ -80,15 +80,36 @@ keyboard-only, with no pressure measurement.
 
 ## 3. Clock — NHATS (verified on disk)
 
-11 zip archives, 507 MB total, in `datasets/NHATS/`. **Images only — no label file
-is present in any archive.** This confirms the flagged deviation in PROJECT_OUTLINE.md:
-training labels must come from our own annotation, not from the paper's source.
+11 zip archives, 507 MB total, in `datasets/NHATS/`. The image zips hold no labels,
+but the **public NHATS Sample Person (SP) survey files do** — checked 2026-10-01 with
+`scripts/check_nhats_labels.py` (aggregate output only).
+
+| Check | Result |
+|---|---|
+| Total clock images, rounds 1-11 | **54,027 — exact match to Bone et al.** |
+| Image filename = SPID | 54,026 plain 8-digit; 1 with a `_V<n>` suffix |
+| `cg<r>dclkdraw` (clock 0-5) | Present in SP file, rounds 1-10 |
+| `hc<r>disescn9` (dementia) | Present in SP file, rounds 1-10 |
+| Image to survey join on SPID | 99.8-100% per round (24 unmatched images in total, all in R1-R3) |
+| Round 11 survey | **Not yet downloaded** — 3,091 R11 images unlabelled until it is |
+
+Value codes seen: clock 0-5 plus negative special codes (-1, -2, -3, -4, -7, -9);
+dementia 1 = yes, 2 = no, 7 = previously reported (from R2 on), plus negative codes.
+Per Bone et al., target = 1 for codes 1 and 7, else 0. Rows with negative codes are
+excluded; exact meanings to be confirmed against the NHATS codebook.
+
+Dementia prevalence (codes 1 + 7) is roughly 6-8% of SP rows per round: heavy class
+imbalance, which supports balanced accuracy as the headline metric.
+
+**Hand annotation is not needed.** The single-rater / no-kappa limitation is withdrawn.
 
 ---
 
 ## 4. Open items
 
 - Eye-tracker hardware model: unknown, not published.
-- Clock labels: to be produced by single-rater annotation. Inter-rater agreement
-  (Cohen's kappa) **cannot be computed** with one rater and must not be claimed.
+- Clock labels: resolved — public NHATS SP files (see section 3). Round 11 survey
+  still to download.
+- Clock split: the same SPID appears in many rounds, so train/validation must be
+  split **by SPID**, not by image, or the same person leaks into both sides.
 - Motor labels: none. Module reports features only until labelled data exists.
