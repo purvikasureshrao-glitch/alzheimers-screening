@@ -1,149 +1,127 @@
 # Implementation Plan (evidence-based)
 
-Every design decision below cites the paper or measurement it came from.
-Status: **plan only — no code written yet.**
-Date: 2026-09-30
+Every design decision below cites the paper, code or measurement it came from.
+Status: **plan only — no code written yet.** Last updated 2026-10-08.
+Anything marked **[OURS]** is not in the source and is a flagged deviation.
+
+**How we work:** read the paper → compare its data with ours → write the code from the
+paper → the user runs it on **Kaggle or Colab** (no ML on the local PC) → results come back
+with 95% CI, n and protocol.
+
+**Where the finished test runs:** a **laptop only**. Every trained model is exported to
+**ONNX** (parity-checked against the original) and served by one local app with
+onnxruntime. The browser page captures webcam, microphone and keyboard.
 
 ---
 
-## A. Corrections to PROJECT_OUTLINE.md
+## A. Corrections to the original outline (clock)
 
-Three of these come from reading Bone et al. properly. They matter.
-
-### A1. The clock labels are PUBLIC. The 40-hour annotation may be unnecessary.
-
-PROJECT_OUTLINE.md says the labels "come from the restricted NHATS survey files,
-which we do not have," and proposes hand-annotating ~2,000 images with the Shulman
-rubric.
-
-**The paper says otherwise.** Section 2.1.2:
-
-> "The **anonymized publicly available** NHATS database comprises annual interviews
-> and cognitive assessments... Data were obtained from rounds 1 to 11 (collected
-> 2011-2021) **from the NHATS website** in February 2023, totaling 54,027 samples."
-
-And section 2.4.1 names the exact variables used as training targets:
+### A1. The clock labels are PUBLIC — verified 2026-10-01
+Bone et al. 2.1.2: NHATS rounds 1-11 "from the NHATS website", 54,027 samples.
+Section 2.4.1 names the targets:
 
 | Variable | Meaning | Range |
 |---|---|---|
 | `cg<round>dclkdraw` | Clock score, assigned by the NHATS interviewer | 0-5 |
-| `hc<round>disescn9` | Self-reported dementia/AD diagnosis (yes and previously-reported = 1, else 0) | 0/1 |
+| `hc<round>disescn9` | Self-reported dementia/AD ("yes" and "previously reported" = 1, else 0) | 0/1 |
 
-The NHATS 0-5 rubric is also printed in the paper (section 2.2.2): 0 = not recognizable
-as a clock, 1 = severely distorted, 2 = moderately distorted, 3 = mildly distorted,
-4 = reasonably accurate, 5 = accurate.
+No hand annotation. Full verification in FINDINGS.md section 3.
 
-**Consequence if the survey files download successfully:**
-- No hand annotation. ~40 hours saved.
-- Labels for all 54,027 images, not a 2,000-image subsample.
-- The single-rater / no-kappa problem disappears.
-- The "flagged deviation" is withdrawn — we reproduce the paper's actual target.
+### A2. Input resolution is 512x512, not 224x224
+Bone et al. 2.3: "requiring a 512 x 512 resolution".
 
-**This must be verified before it is relied on.** Action: register at nhats.org, download
-the Round 1-11 interview/sensitive-demographic files, and confirm both variables are
-present and joinable to the image filenames by SPID. Until that check passes, the
-annotation fallback stays on the table.
-
-### A2. Input resolution is 512x512, not 224x224.
-
-PROJECT_OUTLINE.md specifies "resize to 224x224". Section 2.3 of the paper:
-
-> "Preprocessing was essential to standardize these images for input into the
-> vit_l_16 dementia classification neural network, **requiring a 512 x 512
-> resolution**."
-
-224 is the torchvision default; the authors deliberately used 512 to preserve clock
-detail. Using 224 would not be a reproduction. **Note this raises GPU cost** — a 512px
-ViT-L/16 processes ~5x the tokens of a 224px one.
-
-### A3. The paper's architecture is three stages, and we cannot build stage 3.
-
+### A3. Three stages; stage 3 cannot be built
 | Stage | What it does | Trained on | Can we? |
 |---|---|---|---|
-| 1. **Crop-Net** | Custom CNN producing a heatmap that locates the clock in the image; applied iteratively to refine the crop. MSE loss, Adam. | NHATS | Yes |
-| 2. **ViT-L/16** | Fine-tuned to predict `[clock_score, dementia_flag]`. Head then discarded; the **1024-dim body output** is the feature vector. | NHATS | Yes |
-| 3. **Linear model** | PCA + Lasso linear model on the 1024-d ViT features; this is what actually outputs dementia. | **TDRA (n=862)** | **No — TDRA is not public** |
+| 1. Crop-Net | CNN heatmap locating the clock; applied 3x to refine the crop | NHATS | Yes |
+| 2. ViT | Fine-tuned to predict `[clock_score, dementia]` | NHATS | Yes |
+| 3. PCA + Lasso | On ViT features; outputs dementia | TDRA (n=862, private) | **No** |
 
-The headline 76.5% balanced accuracy is stage 3 evaluated on TDRA. We have no clinical
-cohort, so **we cannot reproduce that number and must not claim it.**
-
-What we *can* do: build stages 1-2 exactly, and report the ViT's own NHATS validation
-performance (clock-score MSE and dementia-flag accuracy). That is an honest,
-reproducible result — just a different one from the paper's headline.
+The 76.5% headline is stage 3 on TDRA: **not reproducible, never claimed.**
 
 ---
 
-## B. Confirmed specifications, read from source
+## B. Method card per modality
 
-### B1. Clock — Bone et al. 2025
+### B1. Speech — Sarawgi et al. 2020 (Interspeech), ADReSS
+Source: `Paper/Speech.pdf` + official code github.com/wazeerzulfikar/alzheimers-dementia
+(MIT licence; read 2026-10-08, see FINDINGS section 5).
 
-- Pretrained weights: `ViT_L_16_Weights.IMAGENET1K_SWAG_E2E_V1` (torchvision)
-- Head replaced with: 3 x FC(1024 to 1024) + LeakyReLU(0.2), then FC(1024 to 2) + sigmoid
-- Clock output multiplied by 5 to span 0-5; dementia output left unmodified
-- Loss: MSE. Optimizer: Adam, lr = 0.00002, betas = (0.5, 0.999)
-- LR divided by 5 on validation plateau; early stopping on plateau
-- **Two-phase training:** body frozen, head only, batch size 50, then unfreeze body,
-  batch size 4 with gradients accumulated over 10 iterations (their VRAM limit)
-- Split: 47,485 train / 1,000 validation
-- Class balance: underrepresented clock scores replicated so scores 0-5 are equal
-- Augmentation: scale 0.7-1.0, translate 0-0.5 of each dimension, rotate -180 to 180
-  degrees, shear -10 to 10 degrees, all uniformly sampled
-- NHATS images are 2560x3312 single-channel and pre-filtered; they must be **inverted**,
-  and black rectangles censoring participant names removed by a custom filter
-- Participant instruction: draw an analog clock with the hands showing 11:10
+| | |
+|---|---|
+| Paper's data | ADReSS 2020: 108 train + 48 test (also DementiaBank Pitt — we don't have it) |
+| Our data | Same ADReSS. Train 54 cc + 54 cd (full-wave audio, `.cha`, MMSE). Test 48, **labels blank** |
+| ① Disfluency | 11 features: intervention rate + 9 CHAT-marker counts + word rate, each ÷ (audio length/10). MLP BN→16→16→24→24→softmax 2 (ReLU, BN, dropout 0.2/0.2/0.1/0.1) |
+| ② Acoustic | openSMILE `IS13_ComParE.conf`, 6,373 features → StandardScaler + PCA(21), **fitted on the training fold only** → Dense 24 (L2/L1 reg) → BN → dropout 0.2 → softmax 2 |
+| ③ Interventions | Speaker sequence INV/PAR/pad one-hot (3-dim), first→last PAR line, padded/truncated to 32 → LSTM 16 → BN → dropout 0.2 → Dense 16 → BN → softmax 2 |
+| Ensemble | Hard (majority vote) for research evaluation |
+| Training | **Paper text:** batch 8, Adam lr 0.01, categorical cross-entropy. Layer sizes from code (paper shows them only in an image). Code's own hparams differ — recorded, not used |
+| Evaluation | 5-fold CV on the 108 labelled subjects |
+| **[OURS]** checkpointing | Paper saved the best model on the fold it reported on (optimistic). We use an inner validation split |
+| **[OURS]** live use | Laptop mic → **Whisper** (local) transcript with word timings, pauses from gaps. Live verdict = ① + ② (mean of probabilities). ③ needs an interviewer → research evaluation only. Whisper validated against the human ADReSS transcripts |
+| Excluded | MMSE regression (section E); Pitt evaluation |
+| Optional | ADReSS test labels from DementiaBank → paper's own 48-subject test evaluation |
 
-### B2. Speech — Sarawgi et al. (MIT), ADReSS
+### B2. Eye — ADEM_TEST, method [OURS]
+| | |
+|---|---|
+| Paper | **None usable.** "Deep Learning-Driven 3D Eye Tracking as a Biomarker…" is the title of the Zenodo dataset record, not a published paper. Related Tianjin papers (MC-CNN arXiv 2303.06868, DISCN arXiv 2403.10124) need stimulus RGB/depth images not in ADEM_TEST |
+| Our data | 20 subjects (10 AD, 10 NC), 12 tasks, ~333 Hz binocular, heatmaps, MMSE/MoCA |
+| Tasks used | **3, one per kind, fixed before any results:** `antisaccade1`, `visual_attention1`, `visual_search1` (first of each kind; antisaccade chosen over prosaccade because antisaccade errors are the best-documented AD eye sign) |
+| Event detection | Adaptive velocity threshold (Nyström & Holmqvist 2010): threshold computed from each recording's own noise — no hand-set number. Speeds in px/ms (screen geometry unpublished) |
+| Features | Fixation count/duration, saccade latency/amplitude/peak velocity, antisaccade direction errors, L/R disconjugacy, heatmap spread |
+| Classifier | Logistic regression; cut-off 0.5 (classes exactly balanced; no tuning) |
+| Evaluation | LOSO (train 19, test 1, x20). Reported as a **pilot** |
+| Not used | Deep learning (n=20 too small) |
+| Live | Laptop webcam, MediaPipe + WebGazer, ~30 Hz → saccade features may not survive; validated separately |
 
-Three branches, exactly as published:
+### B3. Clock — Bone et al. 2025
+Source: `Paper/Clock_drawing.pdf` + `Paper/dad270171-sup-0001-suppmat.docx`.
 
-| Branch | Input | Model |
+- ViT weights (paper): `ViT_L_16_Weights.IMAGENET1K_SWAG_E2E_V1`. **Ours: ViT-B/16 at 512px**
+  baseline; L/16 only if justified [OURS].
+- Head: 3 x FC(1024→1024) + LeakyReLU(0.2), then FC(1024→2) + sigmoid; clock output x5.
+- Loss MSE; Adam lr 0.00002, betas (0.5, 0.999); LR ÷5 on plateau; early stopping.
+- Two phases: head only (batch 50), then full body (batch 4, grad accumulation 10).
+- Balance: replicate under-represented clock scores so 0-5 are equal.
+- Augmentation: scale 0.7-1.0, translate 0-0.5, rotate ±180°, shear ±10°, uniform.
+- NHATS images 2560x3312 single-channel, pre-filtered → invert; remove name boxes.
+- Crop-Net: section H4 (read from Figure 1, 2026-10-08).
+- Live: patient draws an 11:10 clock on paper → laptop webcam photo → same cleaning/crop → ONNX.
+
+### B4. Motor — Koppelmans et al. 2023
+Source: https://pmc.ncbi.nlm.nih.gov/articles/PMC10578230/ ; task code
+github.com/vnckppl/FingerTappingTask.
+
+| | |
+|---|---|
+| Paper's data | 100 (47 CN, 27 aMCI, 26 AD). "Available on request from the corresponding author" |
+| Our data | **None.** No public labelled tapping dataset found (FINDINGS section 2) |
+| Task | Shift keys; "Get Ready!" 3 s, then "Start Pressing!"; 3 trials x 10 s per condition |
+| Conditions used | **3 of 4 [OURS]:** right index, simultaneous, alternating. Left index dropped |
+| Features | Paper's 20 minus the 3 left-hand ones = 17, plus tapping-gap count (onset delay or gap > 1 s) |
+| Classifier | Balanced Random Forest (imbalanced-learn), 50 trees, max depth 5, gini (paper's GridSearchCV result) |
+| Output classes | The dataset's own groups: CN / aMCI / AD (3 classes) |
+| Threshold | No published validated cut-off exists → none invented |
+| Route | User emails Koppelmans et al. for the data. Meanwhile: task + features + classifier code. Until data arrives: **features only, no verdict** |
+
+---
+
+## C. Build order (training)
+
+| # | Step | Note |
 |---|---|---|
-| **Disfluency** | 11 features from transcripts (word rate, intervention rate, various pause rates), normalized by audio length then scaled | MLP projecting to higher dimension |
-| **Acoustic** | ComParE 2013 via openSMILE v2.1 giving 6,373 features, z-score normalized, then **PCA to 21 components** | MLP with one hidden layer |
-| **Interventions** | Speaker sequence (subject vs interviewer) from the transcript, **padded/truncated to 32 steps** | Recurrent network |
+| 0 | ✅ NHATS survey labels verified (2026-10-01) | |
+| 1 | Repo scaffold: layout, one notebook per modality, `common/metrics.py`, Python **3.13** locally | Local PC = editing + running the app only |
+| 2 | **Speech** end to end | Data ready, method fully specified |
+| 3 | **Eye** | |
+| 4 | **Clock** Crop-Net → crop → QC → ViT | **Blocked:** NHATS Conditions of Use check (upload scope) |
+| 5 | **Motor** task + features (+ classifier when data arrives) | |
+| 6 | ONNX export + parity check for every model | |
+| 7 | Local laptop app: one endpoint per test + "see what was captured" views | |
+| 8 | LLM summary (local 7-8B via Ollama), schema-validated | |
 
-- Ensemble: hard (majority vote), soft (equal-weight probability sum), or **learnt**
-  (logistic regression over the three models' class probabilities)
-- Training: batch size 8, Adam, lr 0.01, categorical cross-entropy
-- Evaluation: 5-fold CV and LOOCV (equals LOSO here, one sample per subject)
-- Uses **full audio samples**, not the provided normalized segments
-- Reported: 83.3% accuracy/precision/recall/F1 on the ADReSS held-out test set
-- Also performs MMSE regression by transfer learning (freeze layers, swap output head,
-  lr 0.001, MSE loss). **Out of scope for us** — classification only. See section E.
-
-Our constraint is unchanged: ADReSS test labels are redacted on our disk, so we
-evaluate by CV on the 108 labeled training subjects and never compare to 83.3%.
-
-### B3. Motor — Koppelmans et al. 2023
-
-Confirmed in FINDINGS.md. Key points for implementation: 4 conditions x 3 trials x 10 s,
-**keyboard shift keys**, "Get Ready" for 3 s then "Start Pressing", 20 continuous
-features plus tapping-gap (pause of 1 s or more) measures, Balanced Random Forest,
-70% accuracy / 0.76 AUC / **45% precision on AD**.
-
-### B4. Eye — ADEM_TEST
-
-Confirmed by direct measurement in FINDINGS.md: ~333 Hz, ~297 ms per task, ~3.6 s per
-subject. Saccade features do not survive a 30 Hz webcam. The webcam path is
-coarse-features-only and validated separately.
-
----
-
-## C. Build order
-
-Rationale: verify the cheap blocking question first, then build what has complete
-labeled data, then what needs new data collection.
-
-| # | Step | Why here | Blocked by |
-|---|---|---|---|
-| 0 | **Verify NHATS survey files download** | Decides whether 40 h of annotation is needed. Cheapest possible check, largest consequence. | User registering at nhats.org |
-| 1 | Repo scaffold, 3.11 venv, pinned dependencies | Everything else imports it | - |
-| 2 | **Speech** end to end | Only modality with complete labeled data on disk and a fully specified method | - |
-| 3 | **Eye** loaders, features, nested LOSO | Data verified, small, n=20 pilot | - |
-| 4 | **Clock** Crop-Net, then ViT stage 2 | Longest GPU time; needs step 0 resolved | Step 0 |
-| 5 | **Motor** React task and timing calibration | Buildable now, but reports features only until labels exist | Labels (none) |
-| 6 | FastAPI service, one endpoint per modality, no fused score | Needs models to serve | 2-5 |
-| 7 | LLM summary layer (local 7-8B via Ollama), schema-validated | Last; consumes the four results | 6 |
+**Display order** in the app and summary: **Clock → Motor → Eye → Speech**.
 
 ---
 
@@ -151,102 +129,159 @@ labeled data, then what needs new data collection.
 
 | Decision | Choice |
 |---|---|
-| NHATS labels | User has public-tier access; survey files being downloaded. `scripts/check_nhats_labels.py` verifies them. Hand annotation is the fallback only if the check fails. |
-| Clock backbone | **ViT-B/16 at 512px** as the working baseline; ViT-L/16 only if B/16's results justify the GPU cost. Recorded as a deviation from the paper. |
-| GPU platform | **Kaggle**, private dataset. 30 free GPU hours/week; sessions survive disconnects. |
-| Local Python | **3.13**, not 3.11. Windows Smart App Control (`VerifiedAndReputablePolicyState = 1`) blocks freshly installed native wheels on the 3.11 install; 3.13 already has working pandas and numpy. |
-| Severity / staging | **Not produced.** Binary labels only, per modality. |
-| Speech MMSE regression | **Out of scope**, per the line above. |
-| Eye task selection | Run the ablation over all 12 tasks and let the data choose; do not fix 3 by hand. Training is CPU-cheap at n=20. |
-| Motor conditions | Keep all 4. The whole battery is 2 minutes of tapping. |
-| Data handling | NHATS Conditions of Use forbid uploading the data to Claude. All NHATS work happens via scripts the user runs locally; only aggregate summaries are shared. |
+| Where ML runs | All preprocessing + training on **Kaggle (primary) / Colab (fallback)**. Nothing ML on the local PC (2026-10-07) |
+| Deployment | Laptop only; ONNX models via onnxruntime in one local app |
+| NHATS labels | Verified. Public SP files carry both targets; SPID join 99.8-100%. No hand annotation |
+| NHATS negative codes | Read from Stata value labels (FINDINGS 3b). Clock negatives excluded [OURS]; dementia negatives → 0 per paper, `dementia_raw` kept for sensitivity analysis |
+| NHATS upload | **Pending:** user pastes the NHATS Conditions of Use; then decide Kaggle private dataset vs Drive+Colab vs local label step only |
+| Data handling | NHATS data never goes to Claude. The user runs NHATS code; only aggregate counts come back |
+| Clock crop QC | Option A: automatic rules validated against ~300 user-graded crops [OURS] |
+| Name-box filter | Our own [OURS] (paper's code unpublished) |
+| Crop-Net 'writing' augmentation | Our own source [OURS] |
+| Clock split | SPID-grouped train / validation / test [OURS: test split added] |
+| Clock backbone | ViT-B/16 at 512px [OURS]; L/16 only if justified |
+| Speech hparams | Paper text (batch 8, lr 0.01) + layer sizes from official code |
+| Speech live | Whisper + ① Disfluency + ② Acoustic; ③ research only [OURS] |
+| Eye method | Our own classical features + logistic regression, 3 fixed tasks [OURS] |
+| Motor | 3 of 4 conditions [OURS]; email authors for data; 3-class output if data arrives |
+| Output classes | Each modality outputs the classes its dataset provides (speech/eye/clock 2, motor 3). No invented severity or staging |
+| Local Python | 3.13 (Smart App Control blocks new native wheels on 3.11) |
+| Speech MMSE regression | Out of scope (section E) |
 
 ---
 
-## E. Severity and staging — explicitly excluded
+## E. Severity and staging — excluded
 
-The system reports **binary labels only**. It does not output mild / moderate / severe,
-an MMSE estimate, or any other severity measure.
+No mild / moderate / severe, no MMSE estimate. Sarawgi et al. report RMSE 4.60 on MMSE
+regression, close to the width of a whole stage band (~5-6 points), so a predicted stage
+would often be wrong by a band.
 
-**Why.** No dataset here carries a stage label. The only severity signal available
-anywhere is MMSE (present in ADReSS and in ADEM_TEST metadata), and predicting it is
-unreliable for staging: Sarawgi et al. report **RMSE 4.60** on MMSE regression, while
-the conventional stage bands are only ~5-6 MMSE points wide. The error is nearly the
-width of a whole stage, so a predicted stage would frequently be wrong by one band.
-
-Reporting a stage we cannot support would be an invented threshold, which this project
-forbids everywhere else. Excluded by decision, not by oversight.
+**Clarification (2026-10-07):** a modality may output its dataset's own diagnostic groups
+(motor: CN / aMCI / AD). Those are labels assigned by the study's clinicians, not a
+severity scale we construct.
 
 ---
 
 ## F. Metrics reported per modality
 
-Every modality reports the same set, with the evaluation protocol stated beside it.
-
-| Metric | Why it is here |
+| Metric | Why |
 |---|---|
-| **Balanced accuracy** | Primary headline. Plain accuracy is misleading when classes are uneven, which they are for NHATS (mostly cognitively normal). |
-| **Precision, recall, F1** | F1 balances false alarms against missed cases. Sarawgi reports these, so speech stays comparable in form. |
-| **AUC** | Threshold-independent; Koppelmans reports it for motor. |
-| **95% confidence interval** | Mandatory. At n=20 a point estimate alone is misleading — the interval is the honest result. |
-| **n and CV protocol** | Stated inline with every number, so no figure can be quoted without its context. |
-
-Confidence intervals: bootstrap over subjects for CV estimates; Wilson interval for
-single held-out proportions.
-
-### The reported result
-
-Four independent rows. No fifth row, no average.
+| **Balanced accuracy** | Headline. Classes are uneven (NHATS ~6-8% dementia) |
+| Precision, recall, F1 | Sarawgi reports these |
+| AUC | Threshold-independent; Koppelmans reports it (multi-class for motor) |
+| **95% CI** | Mandatory. Bootstrap over subjects for CV; Wilson for single held-out proportions |
+| n and protocol | Inline with every number |
 
 ```
-MODALITY   TASK                BAL ACC   F1    AUC   95% CI     PROTOCOL
-Speech     AD vs control         ?       ?      ?    ?-?        5-fold CV, n=108
-Clock      dementia flag         ?       ?      ?    ?-?        held-out 1,000
-Eye        AD vs NC              ?       ?      ?    ?-?        LOSO, n=20
-Motor      (features only)       -       -      -    -          no labels exist
+MODALITY   TASK                  BAL ACC  F1   AUC  95% CI  PROTOCOL
+Clock      dementia flag           ?      ?     ?    ?-?    SPID-grouped test split
+Motor      CN/aMCI/AD (if data)    -      -     -    -      features only until data
+Eye        AD vs NC                ?      ?     ?    ?-?    LOSO, n=20 (pilot)
+Speech     AD vs control           ?      ?     ?    ?-?    5-fold CV, n=108
 ```
 
-**No single "overall accuracy" is computed or claimed.** Training a classifier over the
-four scores would require a cohort in which the same people took all four tests. No such
-cohort exists here: NHATS, ADReSS and ADEM share zero participants. Duplicating rows to
-manufacture one would put copies of the same subject in both train and test, which is
-data leakage and inflates accuracy artificially.
-
-The statement that accompanies the table:
-
-> Four independent screens, each validated on its own cohort. No combined score is
-> claimed, because no cohort exists in which the same people took all four tests.
-
-A genuine overall number would require a prospective pilot: 30-50 participants who
-complete all four assessments with a known diagnosis. That is a valid next phase, not
-something derivable from current data.
+No fifth row, no average. NHATS, ADReSS and ADEM share zero participants, so no combined
+accuracy can be computed.
 
 ---
 
 ## G. LLM summary layer
 
-Input: the four structured results — each a binary label, a probability, and the
-metrics from section F. Nothing else.
+Input: the four structured results (label, probability, metrics). Output: prose for a
+clinician, in the order Clock → Motor → Eye → Speech.
 
-Output: readable prose describing what each modality found and how reliable it is.
+One stated rule, not learned: **2 or more of 4 flagged → recommend clinical follow-up.**
+No accuracy claim. Constraints enforced in code: runs after all four; no weighting /
+averaging / fusing; no diagnosis, no invented stage or threshold; schema-validated output,
+violations rejected. Model: local 7-8B via Ollama.
 
-Plus one **stated combination rule**, written by us and not learned:
+---
 
-> 2 or more of 4 modalities flagged -> recommend clinical follow-up.
+## H. Clock build spec — step by step
 
-The rule's threshold is documented and carries **no accuracy claim**, because it was not
-fitted to data.
+Sources: Bone et al. main text + Supplementary Methods. All steps run on Kaggle/Colab once
+the NHATS upload question is settled (D). NHATS scripts print aggregate counts only.
 
-Hard constraints, enforced in code (unchanged from PROJECT_OUTLINE.md, with staging
-added):
+### H1. Label table
+- Input: clock zips + SP `.dta` inside each Stata zip (R8 Stata sits in `survey/SAS/`).
+- Image stem = SPID (one `_V<n>` suffix: strip). Columns:
+  `spid, round, zip_name, member_path, clock_score, dementia, dementia_raw`.
+- `clock_score` = `cg<r>dclkdraw` if 0-5; **negative codes excluded [OURS]** (none is a score).
+- `dementia` = 1 if `hc<r>disescn9` in {1, 7}, else 0 (paper's rule, negatives included as 0).
+- Unmatched images (24, R1-R3) excluded. Print counts by reason and prevalence.
+- If the NHATS terms forbid uploading the survey files, H1 runs locally (seconds, no ML)
+  and only `labels.csv` is uploaded.
 
-1. Runs only after all four assessments complete.
-2. Receives structured input; summarizes it as evidence.
-3. Must not weight, average, fuse or otherwise combine modalities mathematically.
-4. Must not produce a diagnosis, a severity stage, or introduce a threshold beyond the
-   documented rule above.
-5. Output is schema-validated; any fused score, stage name or diagnostic claim is
-   rejected rather than post-edited.
+### H2. SPID-grouped split [OURS]
+Each SPID in exactly one of train / validation (~1,000 images) / test (10% of SPIDs);
+fixed seed; stratified on "ever dementia = 1". Output `split.csv`.
 
-Model: local open-source 7-8B via Ollama, keeping patient data on the machine. Hosted
-API is a fallback if quality is insufficient.
+### H3. Preprocess
+Invert; name-box filter [OURS] (solid rectangles → 0, validated on a sample the user views);
+rough crop = smallest box holding 96% of pixel sum, +50 px.
+
+### H4. Crop-Net (read from Figure 1, 2026-10-08)
+- Input 1x512x512.
+- **7 "convolution downsample" blocks.** Each: Conv 3x3 s1 p1 → LeakyReLU(0.2) → Conv 4x4
+  s2 p1 → LeakyReLU(0.2), then concatenate the original image downsampled to the same size
+  (max-pool and bilinear = +2 channels). Channels increase at the second conv, except
+  block 1 (1→25 at the first conv, 25→48 at the second).
+  Outputs: (48+2)x256², (98+2)x128², (198+2)x64², (398+2)x32², (423+2)x16², (448+2)x8²,
+  (498+2)x4².
+- **2 "convolution" blocks:** Conv 3x3 s1 p1 → LeakyReLU(0.2); 500x4x4 each.
+- **4 "convolution upsample" blocks:** ConvTranspose 4x4 s2 p1 → LeakyReLU(0.2);
+  250x8², 150x16², 100x32², 50x64².
+- Final Conv 3x3 s1 p1 → **1x64x64** → sigmoid → clock location heatmap.
+- **Open discrepancy:** the supplement describes a 2x512x512 target (clock mask, and mask
+  x score/5); the figure outputs 1x64x64. To resolve before coding (FINDINGS 3a).
+- Training samples built on the fly: rotate ≤180°, resize 1 to 1/8, place on a 512 black
+  canvas ([OURS] interpretation: first fit the rough crop to 512 on its longest side), add
+  noise, single/parallel lines (lined paper in 2 of 50 per batch), writing [OURS source],
+  rectangles; noise/lines may overlap the clock, writing/rectangles may not.
+- MSE; Adam lr 0.00002, betas (0.5, 0.999); batch 50; LR ÷5 on plateau; early stopping.
+  Paper split 52,527 / 500 / 1,000.
+
+### H5. Multi-step crop (x3)
+Resize to 512 → heatmap → resize back → crop to 84% of heatmap sum +80 px → crop to 96% of
+pixel sum +30 px → pad square → 512x512.
+
+### H6. Crop quality check — Option A [OURS]
+User grades ~300 random crops; automatic rules (ink fraction, ink touching border, crop
+size) fitted to them; report agreement. Retrain Crop-Net on passing crops and re-run H5, as
+the paper did. Report rejection rate beside the paper's 9.3% (5,042 / 54,027).
+
+### H7. ViT
+Spec B3. Position embeddings interpolated to 512. Grey → 3 channels. Balancing and
+augmentation in train **and validation** (paper); none on test. **Decision threshold
+[OURS]:** chosen on validation (max balanced accuracy), applied unchanged to test. Report
+on test: balanced accuracy, F1, AUC, 95% CI (bootstrap over SPIDs), clock-score MSE.
+
+### File map
+| Step | File | Main functions |
+|---|---|---|
+| H1 | `clock/labels.py` | `index_images()`, `read_sp_file(round)`, `build_label_table()` |
+| H2 | `clock/split.py` | `split_by_spid()` |
+| H3 | `clock/preprocess.py` | `load_tif()`, `invert()`, `remove_name_boxes()`, `crop_to_mass()`, `pad_square()` |
+| H4 | `clock/cropnet/model.py`, `clock/cropnet/synth.py`, `notebooks/clock_cropnet_train.ipynb` | `CropNet`, `make_sample()` |
+| H5 | `clock/crop.py` | `multi_step_crop(img, model, iterations=3)` |
+| H6 | `clock/crop_qc/viewer.py`, `clock/crop_qc/rules.py` | `grade()`, `fit_rules()`, `apply_rules()` |
+| H7 | `clock/vit/model.py`, `notebooks/clock_vit_train.ipynb` | `ClockViT` |
+| all | `common/metrics.py`, `common/export_onnx.py` | `balanced_acc_ci()`, `auc_ci()`, `pick_threshold()`, `export()`, `verify_parity()` |
+
+---
+
+## I. "See what was captured" views (laptop app)
+
+| Test | Shown |
+|---|---|
+| Clock | original → cleaned → Crop-Net heatmap → final crop → ViT attention map [OURS] → score + verdict |
+| Motor | tap timeline per key, inter-tap gaps, pauses ≥ 1 s highlighted, feature table |
+| Eye | gaze path with fixations/saccades (both eyes) + heatmap; live webcam with MediaPipe landmarks and WebGazer gaze dot, then replay |
+| Speech | waveform, Whisper transcript with pauses/fillers/repeats highlighted, each network's probability |
+
+---
+
+## J. Things only the user can do
+1. Paste the NHATS Conditions of Use → decide upload scope (blocks clock).
+2. Email Koppelmans et al. for the tapping data (Claude drafts it).
+3. Optional: ADReSS test labels from DementiaBank.
