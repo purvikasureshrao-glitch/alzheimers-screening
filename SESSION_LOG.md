@@ -185,3 +185,35 @@ search), `PROJECT_OUTLINE.md` (rewritten, display order, ONNX, laptop, deviation
 Still **not committed**. Resume with: user pastes the NHATS Conditions of Use → Claude
 decides upload scope; Claude drafts the Koppelmans data-request email; resolve the
 Crop-Net output-shape discrepancy; commit on the user's word; then scaffold → Speech.
+
+---
+
+## 2026-10-09 — Crop-Net output and NHATS upload scope settled
+
+**Discussed:**
+- Where we left off: docs from 2026-10-08 were already committed (ccb78b6).
+- Crop-Net discrepancy re-read in the supplement: it is self-consistent (2x512x512
+  target; "the 512x512 heatmap was reshaped to the original image size"); only Figure 1
+  (1x64x64) differs. Authors' code unpublished, so no source settles it.
+- Plain-words explanation of Crop-Net, the two maps, and what "the supplement" is.
+  User asked why map 2 is needed: it is only a training target ("clockness", score/5),
+  never used for cropping; kept to follow the paper (rule 1), no evidence it helps.
+- NHATS Conditions of Use found at nhats.org/researcher/data-access (verbatim in
+  FINDINGS 3c): no upload to LLM/AI platforms, no transfer, aggregate reporting only.
+
+**Decided:**
+- **Crop-Net output [OURS]:** Figure 1 layers, final conv 2 channels → 2x64x64;
+  supplement's 2x512x512 target area-averaged to 64x64; channel 0 (clock mask) used for
+  cropping. Map 2 kept to follow the paper.
+- **NHATS:** Google Drive + Colab allowed; **Kaggle (even private) not used**; never use
+  Colab's Gemini/AI assistant on a notebook with NHATS data. Speech/Eye may still use Kaggle.
+- Koppelmans data-request email: **sent by the user**; awaiting reply.
+
+**Changed:** `PLAN.md` (H4 output resolved, H5, D rows, C step 4, H intro/H1, J),
+`FINDINGS.md` (3a resolved, new 3c Conditions of Use, open items), `PROJECT_OUTLINE.md`
+(clock: where it runs, Crop-Net output), `CLAUDE.md` (rule 5, environment). Commit 090c410.
+
+**Open / next:**
+1. User switches to `/model sonnet` → plan step 1 (scaffold), then Speech (PLAN B1, C).
+2. Await Koppelmans reply (motor data).
+3. Optional: confirm Drive + Colab with NHATSdata@Westat.com; ADReSS test labels.
