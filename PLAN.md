@@ -1,11 +1,11 @@
 # Implementation Plan (evidence-based)
 
 Every design decision below cites the paper, code or measurement it came from.
-Status: **plan only — no code written yet.** Last updated 2026-10-08.
+Status: **plan only — no code written yet.** Last updated 2026-10-09.
 Anything marked **[OURS]** is not in the source and is a flagged deviation.
 
 **How we work:** read the paper → compare its data with ours → write the code from the
-paper → the user runs it on **Kaggle or Colab** (no ML on the local PC) → results come back
+paper → the user runs it on **Kaggle or Colab** (Clock: **Colab + Google Drive only**, see D) (no ML on the local PC) → results come back
 with 95% CI, n and protocol.
 
 **Where the finished test runs:** a **laptop only**. Every trained model is exported to
@@ -115,7 +115,7 @@ github.com/vnckppl/FingerTappingTask.
 | 1 | Repo scaffold: layout, one notebook per modality, `common/metrics.py`, Python **3.13** locally | Local PC = editing + running the app only |
 | 2 | **Speech** end to end | Data ready, method fully specified |
 | 3 | **Eye** | |
-| 4 | **Clock** Crop-Net → crop → QC → ViT | **Blocked:** NHATS Conditions of Use check (upload scope) |
+| 4 | **Clock** Crop-Net → crop → QC → ViT | **Colab + Google Drive only** (NHATS may not go to Kaggle, D) |
 | 5 | **Motor** task + features (+ classifier when data arrives) | |
 | 6 | ONNX export + parity check for every model | |
 | 7 | Local laptop app: one endpoint per test + "see what was captured" views | |
@@ -129,15 +129,16 @@ github.com/vnckppl/FingerTappingTask.
 
 | Decision | Choice |
 |---|---|
-| Where ML runs | All preprocessing + training on **Kaggle (primary) / Colab (fallback)**. Nothing ML on the local PC (2026-10-07) |
+| Where ML runs | All preprocessing + training on **Kaggle (primary) / Colab (fallback)**. Nothing ML on the local PC (2026-10-07). **Exception: Clock (NHATS) runs on Colab + Google Drive only** (2026-10-09) |
 | Deployment | Laptop only; ONNX models via onnxruntime in one local app |
 | NHATS labels | Verified. Public SP files carry both targets; SPID join 99.8-100%. No hand annotation |
 | NHATS negative codes | Read from Stata value labels (FINDINGS 3b). Clock negatives excluded [OURS]; dementia negatives → 0 per paper, `dementia_raw` kept for sensitivity analysis |
-| NHATS upload | **Pending:** user pastes the NHATS Conditions of Use; then decide Kaggle private dataset vs Drive+Colab vs local label step only |
+| NHATS upload | **Settled 2026-10-09:** Conditions of Use read (FINDINGS 3c). **Google Drive + Colab: allowed. Kaggle (even private): not allowed** (user's decision). Never use Colab's Gemini / any AI assistant in a notebook with NHATS data loaded. Aggregate reporting only |
 | Data handling | NHATS data never goes to Claude. The user runs NHATS code; only aggregate counts come back |
 | Clock crop QC | Option A: automatic rules validated against ~300 user-graded crops [OURS] |
 | Name-box filter | Our own [OURS] (paper's code unpublished) |
 | Crop-Net 'writing' augmentation | Our own source [OURS] |
+| Crop-Net output | Figure 1 layers, final conv **2 channels → 2x64x64** [OURS]; supplement's 2x512x512 target area-averaged to 64x64; channel 0 (clock mask) used for cropping (2026-10-09) |
 | Clock split | SPID-grouped train / validation / test [OURS: test split added] |
 | Clock backbone | ViT-B/16 at 512px [OURS]; L/16 only if justified |
 | Speech hparams | Paper text (batch 8, lr 0.01) + layer sizes from official code |
@@ -199,8 +200,9 @@ violations rejected. Model: local 7-8B via Ollama.
 
 ## H. Clock build spec — step by step
 
-Sources: Bone et al. main text + Supplementary Methods. All steps run on Kaggle/Colab once
-the NHATS upload question is settled (D). NHATS scripts print aggregate counts only.
+Sources: Bone et al. main text + Supplementary Methods. All steps run on **Colab with the
+data on Google Drive** — never Kaggle, never Colab's AI assistant (D). NHATS scripts print
+aggregate counts only.
 
 ### H1. Label table
 - Input: clock zips + SP `.dta` inside each Stata zip (R8 Stata sits in `survey/SAS/`).
@@ -209,8 +211,7 @@ the NHATS upload question is settled (D). NHATS scripts print aggregate counts o
 - `clock_score` = `cg<r>dclkdraw` if 0-5; **negative codes excluded [OURS]** (none is a score).
 - `dementia` = 1 if `hc<r>disescn9` in {1, 7}, else 0 (paper's rule, negatives included as 0).
 - Unmatched images (24, R1-R3) excluded. Print counts by reason and prevalence.
-- If the NHATS terms forbid uploading the survey files, H1 runs locally (seconds, no ML)
-  and only `labels.csv` is uploaded.
+- Runs on Colab, reading the zips from Google Drive (upload allowed, D).
 
 ### H2. SPID-grouped split [OURS]
 Each SPID in exactly one of train / validation (~1,000 images) / test (10% of SPIDs);
@@ -231,9 +232,14 @@ rough crop = smallest box holding 96% of pixel sum, +50 px.
 - **2 "convolution" blocks:** Conv 3x3 s1 p1 → LeakyReLU(0.2); 500x4x4 each.
 - **4 "convolution upsample" blocks:** ConvTranspose 4x4 s2 p1 → LeakyReLU(0.2);
   250x8², 150x16², 100x32², 50x64².
-- Final Conv 3x3 s1 p1 → **1x64x64** → sigmoid → clock location heatmap.
-- **Open discrepancy:** the supplement describes a 2x512x512 target (clock mask, and mask
-  x score/5); the figure outputs 1x64x64. To resolve before coding (FINDINGS 3a).
+- Final Conv 3x3 s1 p1 → sigmoid → clock location heatmap. Figure 1 shows **1x64x64**.
+- **Output — resolved 2026-10-09 [OURS]:** final conv outputs **2 channels → 2x64x64**.
+  Target = the supplement's 2x512x512 (ch 0 = clock area 1, ch 1 = clock area x score/5),
+  area-averaged to 64x64. MSE on both channels. **Channel 0** is the heatmap used for
+  cropping (H5), bilinearly resized to the image size. Why: keeps every Figure 1 layer and
+  the supplement's two-channel target; changes only the final conv's out-channels 1 → 2.
+  Rejected: 1x64x64 only (drops the score channel); 2x512x512 (needs 3 invented
+  upsample blocks). Authors' code unpublished, so not verifiable (FINDINGS 3a).
 - Training samples built on the fly: rotate ≤180°, resize 1 to 1/8, place on a 512 black
   canvas ([OURS] interpretation: first fit the rough crop to 512 on its longest side), add
   noise, single/parallel lines (lined paper in 2 of 50 per batch), writing [OURS source],
@@ -242,7 +248,7 @@ rough crop = smallest box holding 96% of pixel sum, +50 px.
   Paper split 52,527 / 500 / 1,000.
 
 ### H5. Multi-step crop (x3)
-Resize to 512 → heatmap → resize back → crop to 84% of heatmap sum +80 px → crop to 96% of
+Resize to 512 → heatmap (channel 0, 64x64) → resize back to image size → crop to 84% of heatmap sum +80 px → crop to 96% of
 pixel sum +30 px → pad square → 512x512.
 
 ### H6. Crop quality check — Option A [OURS]
@@ -282,6 +288,6 @@ on test: balanced accuracy, F1, AUC, 95% CI (bootstrap over SPIDs), clock-score 
 ---
 
 ## J. Things only the user can do
-1. Paste the NHATS Conditions of Use → decide upload scope (blocks clock).
-2. Email Koppelmans et al. for the tapping data (Claude drafts it).
+1. ✅ NHATS Conditions of Use read; Drive + Colab chosen (2026-10-09). Optional: confirm with NHATSdata@Westat.com.
+2. ✅ Emailed Koppelmans et al. for the tapping data (sent by 2026-10-09); awaiting reply.
 3. Optional: ADReSS test labels from DementiaBank.

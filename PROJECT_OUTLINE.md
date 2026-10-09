@@ -27,8 +27,8 @@ method → Our implementation**; every deviation is flagged **[OURS]**. Full det
 | **Deviations [OURS]** | ViT-B/16 instead of L/16; own name-box filter; own handwriting source; crop QC on ~300 user-graded crops; SPID-grouped test split; threshold chosen on validation |
 | **Result** | Dementia yes/no on the SPID-grouped test split |
 | **Live** | Patient draws on paper → laptop webcam photo → same preprocessing → `models/clock/vit_b16_clock.onnx` |
-| **Blocked by** | NHATS Conditions of Use check (what may be uploaded to Kaggle/Drive) |
-| **Open** | Crop-Net output shape: Figure 1 (1x64x64) vs supplement (2x512x512) |
+| **Where it runs** | **Colab + Google Drive only** — NHATS data never on Kaggle, never to Claude or any AI assistant (Conditions of Use, FINDINGS 3c) |
+| **Crop-Net output** | Figure 1 layers, 2-channel final conv → 2x64x64; supplement target downsampled; channel 0 for cropping [OURS] |
 
 ---
 

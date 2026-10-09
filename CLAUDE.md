@@ -34,9 +34,10 @@ summarises the four results as prose for clinician review at the end.
 4. **All preprocessing and training run on Kaggle (primary) or Colab (fallback).**
    Nothing ML on the local PC. The finished test runs on a laptop via ONNX models in one
    local app.
-5. **NHATS data must never be uploaded to Claude** (NHATS Conditions of Use). Write
-   scripts the user runs (locally or in their own Kaggle/Colab notebook); only
-   aggregate summaries come back.
+5. **NHATS data must never be uploaded to Claude or any AI platform, nor to Kaggle**
+   (NHATS Conditions of Use, FINDINGS 3c). Write scripts the user runs (locally or in
+   their own Colab notebook with data on Google Drive); only aggregate summaries come
+   back.
 6. Report every metric with its 95% CI, n and CV protocol. Balanced accuracy is the
    headline. Never compare our numbers to papers' leaderboard/headline figures when
    the evaluation differs.
@@ -46,8 +47,8 @@ summarises the four results as prose for clinician review at the end.
 
 - Windows 11, local Python **3.13** (3.11 is blocked by Smart App Control for new
   native wheels).
-- GPU: Kaggle (~30 free GPU hours/week), Colab fallback. NHATS upload scope pending the
-  NHATS Conditions of Use check.
+- GPU: Kaggle (~30 free GPU hours/week), Colab fallback. **NHATS (clock): Colab + Google
+  Drive only — never Kaggle, never Colab's Gemini/AI assistant** (FINDINGS 3c).
 - Display order everywhere: Clock → Motor → Eye → Speech.
 - Workflow: plan on Opus, switch to Sonnet (`/model sonnet` — forward slash) for coding.
 

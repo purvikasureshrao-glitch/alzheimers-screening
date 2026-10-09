@@ -134,13 +134,35 @@ Source: `Paper/dad270171-sup-0001-suppmat.docx`.
 | "Writing" augmentation | "Publicly available sources on the internet" — **source not named** |
 | Crop-Net layers | Only in Figure 1 of the main paper (raster image). **Read 2026-10-08** by extracting the embedded image from the PDF — full layer list in PLAN.md H4 |
 
-**Crop-Net output discrepancy (open):** Figure 1 ends in Conv 3x3 → **1x64x64** → sigmoid
+**Crop-Net output discrepancy (resolved by choice 2026-10-09, PLAN H4):** Figure 1 ends in Conv 3x3 → **1x64x64** → sigmoid
 ("clock location heatmap"). The supplement describes the target as **2x512x512** (channel
 0 = clock area, channel 1 = clock area x score/5). Figure 2A shows single-channel
-"score-weighted targets". These do not agree; to be resolved before Crop-Net is coded.
+"score-weighted targets". These do not agree. Re-read 2026-10-09: the supplement is
+self-consistent ("The 512x512 heatmap was reshaped to the original image size", para on
+multi-step cropping); only Figure 1 differs. Authors' code is unpublished, so no source
+settles it. **Choice [OURS]:** Figure 1 layers with a 2-channel final conv (2x64x64);
+2x512x512 target area-averaged to 64x64; channel 0 used for cropping.
 
 **Correction:** the ViT's 47,485 + 1,000 = 48,485 images are the **successfully cropped**
 images, not "images with valid labels". The ~5,500 gap from 54,027 is crop rejection.
+
+### 3c. NHATS Conditions of Use (read 2026-10-09)
+
+Source: https://www.nhats.org/researcher/data-access, heading "Conditions of Use for NHATS
+Public Use Data" (accepted at registration). Relevant clauses, verbatim:
+
+- "will NOT upload NHATS or NSOC data to a public large language model or AI platforms
+  including but not limited to ChatGPT, Claude, Gemini, Copilot, and other similar systems
+  that process data externally and do not guarantee data confidentiality or non-retention."
+- "will NOT transfer NHATS Public Use data to anyone other than staff or students that you
+  have direct responsibility for."
+- "will use the data only for scientific research purposes and only for aggregate
+  statistical reporting."
+- Cite NHATS; notify NHATSdata@Westat.com of publications; destroy data if requested.
+
+Kaggle / Colab are not named. **User's decision:** Google Drive + Colab allowed; Kaggle
+(including private datasets) not used. Colab's Gemini / any AI assistant must not be used
+in a notebook with NHATS data loaded. Optional confirmation: NHATSdata@Westat.com.
 
 ### 3b. NHATS negative codes (read 2026-10-07)
 
@@ -170,10 +192,9 @@ so `dementia_raw` is kept for a sensitivity analysis.
 - Eye-tracker hardware model: unknown, not published.
 - Clock labels: resolved — public NHATS SP files, all 11 rounds (section 3).
 - Clock split: by SPID (same person recurs across rounds).
-- **Crop-Net output shape:** figure (1x64x64) vs supplement (2x512x512) — section 3a.
-- **NHATS Conditions of Use:** not found online; user to paste them. Decides what may be
-  uploaded to Kaggle/Drive.
-- Motor labels: none public. User to request Koppelmans et al. data.
+- Crop-Net output shape: resolved by choice 2026-10-09 (2x64x64) — section 3a, PLAN H4.
+- NHATS Conditions of Use: read 2026-10-09 (section 3c). Drive + Colab only; no Kaggle.
+- Motor labels: none public. Data request emailed to Koppelmans et al. (sent by user, by 2026-10-09); awaiting reply.
 - ADReSS test labels: blank on our copy; obtainable from DementiaBank (optional).
 
 ---
