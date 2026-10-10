@@ -255,3 +255,30 @@ Models/CV are **untested** — no torch locally by rule 4; the notebook starts w
    and the metrics (95% CI, n, protocol).
 4. Then plan step 3 (Eye), per PLAN B2.
 5. Awaiting Koppelmans reply (motor data).
+
+---
+
+## 2026-10-10 — Commit, TalkBank terms, Eye code
+
+**Discussed:**
+- User asked to check the ADReSS/DementiaBank terms; no reply yet from Koppelmans;
+  approved the plain Eye plan; asked to commit.
+- Smart App Control also blocks sklearn's `liblinear` DLL locally, so the LOSO test is
+  skipped locally (runs on Kaggle).
+
+**Found:** TalkBank Ground Rules (FINDINGS 7): password-protected data may not be posted
+on other servers or uploaded to web systems without a no-retention assurance; ADReSS has no
+separate terms. A Kaggle private dataset of ADReSS is therefore likely not allowed.
+
+**Decided:** Eye per PLAN B2. [OURS] deviations: threshold iteration starts from max
+velocity; antisaccade-error and heatmap features dropped; tracker dropout not a feature.
+
+**Changed:** commit d1f782b (scaffold + Speech). New `eye/features.py`, `eye/cv.py`,
+`tests/test_eye_{features,cv}.py`, real `notebooks/eye.ipynb`; `PLAN.md` B2 features + step
+3; `FINDINGS.md` 7 and 8. Eye code UNCOMMITTED. 4 eye tests pass locally, 1 skipped.
+
+**Open / next:**
+1. **User decides how Speech obtains ADReSS compute** (see message): Kaggle is likely off.
+2. Run `notebooks/eye.ipynb` on Kaggle (ADEM_TEST is CC-BY-4.0 on Zenodo); send results.
+3. Awaiting Koppelmans reply (consider a polite follow-up after ~2 weeks).
+4. Then Clock (Colab + Drive, NHATS).

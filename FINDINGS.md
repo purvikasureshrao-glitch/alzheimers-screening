@@ -241,3 +241,41 @@ with MMSE; test 48 (S160…) with `test_results.txt` empty — matches the paper
 - Same group: MC-CNN (arXiv 2303.06868) and DISCN (arXiv 2403.10124) use stimulus RGB and
   depth maps with heatmaps. ADEM_TEST has no stimulus images → neither is reproducible.
 - Conclusion: the eye method is our own, flagged (PLAN.md B2).
+
+
+---
+
+## 7. TalkBank / DementiaBank Ground Rules (read 2026-10-10)
+
+Source: https://talkbank.org/0share/rules.html (fetched via a summarising tool, so quotes
+are fragments; re-read the page before relying on exact wording). ADReSS is listed under
+"Challenges" on https://talkbank.org/dementia/ with **no terms of its own**; the general
+DementiaBank (password-protected clinical bank) rules therefore apply as far as we can tell.
+
+- "Password-protected data cannot be posted on other websites or servers or shared with
+  anyone" without password access.
+- "Users cannot upload TalkBank data to web-based systems unless those systems include
+  assurance" that data is not kept; the page names OpenAI/Anthropic/Google/Rev-AI with
+  opt-outs. Google Drive, Colab and Kaggle are **not mentioned either way**.
+- Downloaded identifiable data "can only be stored on a local device for analysis and
+  cannot be circulated further".
+- Access to clinical banks is restricted to faculty; students go through their faculty
+  advisor, who is responsible for the student's compliance.
+- Non-commercial use; cite sources in publications.
+
+**Consequence:** a Kaggle private dataset of ADReSS is "posted on another server" — likely
+not permitted. Not settled; see SESSION_LOG 2026-10-10.
+
+---
+
+## 8. Eye — features measured on ADEM_TEST (2026-10-10)
+
+- Sentinel `-100` = no data in a gaze column; treated as missing.
+- Recordings are ~0.3 s: with the adaptive threshold the three fixed tasks average **~0.5-1.3
+  saccades per recording**; 9-11 of 20 subjects have no detected saccade on a given task, so
+  saccade features are missing for ~half the subjects and are imputed (training fold only).
+- Tracker dropout differs by group (antisaccade1: AD 34% vs NC 15% of samples; visual_search1:
+  30% vs 3%) → a data-quality confound; reported, not used as a feature.
+- L/R disconjugacy is 150-360 px: dominated by eye-tracker calibration offset, not a
+  validated gaze sign. Kept because PLAN B2 lists it; interpret cautiously.
+- Antisaccade direction errors cannot be computed: the target side is not in the files.

@@ -69,7 +69,7 @@ Source: `Paper/Speech.pdf` + official code github.com/wazeerzulfikar/alzheimers-
 | Our data | 20 subjects (10 AD, 10 NC), 12 tasks, ~333 Hz binocular, heatmaps, MMSE/MoCA |
 | Tasks used | **3, one per kind, fixed before any results:** `antisaccade1`, `visual_attention1`, `visual_search1` (first of each kind; antisaccade chosen over prosaccade because antisaccade errors are the best-documented AD eye sign) |
 | Event detection | Adaptive velocity threshold (Nyström & Holmqvist 2010): threshold computed from each recording's own noise — no hand-set number. Speeds in px/ms (screen geometry unpublished) |
-| Features | Fixation count/duration, saccade latency/amplitude/peak velocity, antisaccade direction errors, L/R disconjugacy, heatmap spread |
+| Features | Per task (10): fixation count/duration, saccade count/amplitude/peak velocity, time to first saccade, L/R disconjugacy x/y, gaze spread x/y. **Dropped vs earlier draft:** antisaccade direction errors (target side is not in the gaze files, so "error" is undefined), heatmap spread (heatmaps unused). Tracker dropout reported, not fed to the classifier. Missing features (recording had no saccade) imputed with training-fold median |
 | Classifier | Logistic regression; cut-off 0.5 (classes exactly balanced; no tuning) |
 | Evaluation | LOSO (train 19, test 1, x20). Reported as a **pilot** |
 | Not used | Deep learning (n=20 too small) |
@@ -114,7 +114,7 @@ github.com/vnckppl/FingerTappingTask.
 | 0 | ✅ NHATS survey labels verified (2026-10-01) | |
 | 1 | Repo scaffold: layout, one notebook per modality, `common/metrics.py`, Python **3.13** locally | Local PC = editing + running the app only |
 | 2 | **Speech** end to end | Data ready, method fully specified |
-| 3 | **Eye** | |
+| 3 | **Eye** — code + notebook written 2026-10-10, awaiting Kaggle run | `eye/{features,cv}.py`, `notebooks/eye.ipynb` |
 | 4 | **Clock** Crop-Net → crop → QC → ViT | **Colab + Google Drive only** (NHATS may not go to Kaggle, D) |
 | 5 | **Motor** task + features (+ classifier when data arrives) | |
 | 6 | ONNX export + parity check for every model | |
