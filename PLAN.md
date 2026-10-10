@@ -1,7 +1,7 @@
 # Implementation Plan (evidence-based)
 
 Every design decision below cites the paper, code or measurement it came from.
-Status: **plan only — no code written yet.** Last updated 2026-10-09.
+Status: **scaffold + speech code written (unrun); no results yet.** Last updated 2026-10-09.
 Anything marked **[OURS]** is not in the source and is a flagged deviation.
 
 **How we work:** read the paper → compare its data with ours → write the code from the
@@ -51,8 +51,8 @@ Source: `Paper/Speech.pdf` + official code github.com/wazeerzulfikar/alzheimers-
 |---|---|
 | Paper's data | ADReSS 2020: 108 train + 48 test (also DementiaBank Pitt — we don't have it) |
 | Our data | Same ADReSS. Train 54 cc + 54 cd (full-wave audio, `.cha`, MMSE). Test 48, **labels blank** |
-| ① Disfluency | 11 features: intervention rate + 9 CHAT-marker counts + word rate, each ÷ (audio length/10). MLP BN→16→16→24→24→softmax 2 (ReLU, BN, dropout 0.2/0.2/0.1/0.1) |
-| ② Acoustic | openSMILE `IS13_ComParE.conf`, 6,373 features → StandardScaler + PCA(21), **fitted on the training fold only** → Dense 24 (L2/L1 reg) → BN → dropout 0.2 → softmax 2 |
+| ① Disfluency | 11 features: intervention rate + 9 CHAT-marker counts + word rate, each ÷ (audio length/10). MLP BN→16→16→24→24→softmax 2 (Dense ReLU→BN→dropout 0.2/0.2/0.1/0.1; only the softmax layer has l2 0.01) |
+| ② Acoustic | openSMILE `IS13_ComParE.conf`, 6,373 features → StandardScaler + PCA(21), **fitted on the training fold only** → Dense 24 ReLU (kernel l2 + activity l1, 0.01) → BN → dropout 0.2 → softmax 2 (kernel l2 0.01) |
 | ③ Interventions | Speaker sequence INV/PAR/pad one-hot (3-dim), first→last PAR line, padded/truncated to 32 → LSTM 16 → BN → dropout 0.2 → Dense 16 → BN → softmax 2 |
 | Ensemble | Hard (majority vote) for research evaluation |
 | Training | **Paper text:** batch 8, Adam lr 0.01, categorical cross-entropy. Layer sizes from code (paper shows them only in an image). Code's own hparams differ — recorded, not used |

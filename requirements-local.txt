@@ -1,0 +1,7 @@
+# Local PC = editing + running the laptop app + tests only. NO ML training here (CLAUDE.md rule 4).
+# Training dependencies are installed inside Kaggle/Colab notebooks.
+numpy
+pandas
+scikit-learn
+scipy
+pytest

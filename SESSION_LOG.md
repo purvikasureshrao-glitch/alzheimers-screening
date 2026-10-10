@@ -217,3 +217,41 @@ Crop-Net output-shape discrepancy; commit on the user's word; then scaffold → 
 1. User switches to `/model sonnet` → plan step 1 (scaffold), then Speech (PLAN B1, C).
 2. Await Koppelmans reply (motor data).
 3. Optional: confirm Drive + Colab with NHATSdata@Westat.com; ADReSS test labels.
+
+---
+
+## 2026-10-09 (later) — Sonnet: scaffold (plan step 1) and Speech code
+
+**Discussed:**
+- User switched to Sonnet 5.5 and asked for plan step 1, then Speech.
+- Default `python` here is 3.14.5, not 3.13; the 3.13 launcher entry exists, so the venv
+  uses `py -3.13`.
+- Re-read the official Sarawgi code (dataset.py, utils.py, config.py, models.py) rather
+  than rely on the FINDINGS paraphrase.
+
+**Decided / found:**
+- Official feature code quirks reproduced as published: regexes run over the whole `.cha`
+  (headers, `%mor`/`%gra` too); a line counts as INV/PAR if it merely contains the string.
+  Sequence length 32 (config.py; dataset.py default is 40).
+- **Corrected regularizers** (earlier notes were wrong): disfluency = only the softmax layer
+  (kernel l2 0.01; activity l1 is a no-op on softmax); acoustic = hidden Dense 24 (kernel l2 +
+  activity l1) + softmax (kernel l2); interventions = none. `models.py` also holds an unused
+  Conv1D "silences" model, not part of the paper's three.
+- Flagged [OURS]: PyTorch port of the Keras models (for ONNX); `opensmile-python`
+  `ComParE_2016` instead of `IS13_ComParE.conf` (both 6,373 features; equivalence unverified);
+  inner-split checkpointing with patience 200.
+
+**Changed (all UNCOMMITTED):** new `common/metrics.py`, `speech/{features,models,cv}.py`,
+`tests/`, `notebooks/` (5 stubs; `speech.ipynb` has real cells), `requirements-local.txt` +
+`.lock.txt`, `pytest.ini`, empty `clock/ eye/ motor/` packages, `.venv` (git-ignored).
+Docs: `FINDINGS.md` section 5 (corrections + quirks), `PLAN.md` B1 rows + status line.
+Tests: 6 metrics + 4 speech-feature tests pass locally (first run slow, ~2 min import).
+Models/CV are **untested** — no torch locally by rule 4; the notebook starts with a shape check.
+
+**Open / next (resume tomorrow):**
+1. User says "commit" (code + docs are uncommitted).
+2. Check the ADReSS/DementiaBank terms before uploading to Kaggle as a private dataset.
+3. Run `notebooks/speech.ipynb` on Kaggle: shape-check cell first, then CV; send back errors
+   and the metrics (95% CI, n, protocol).
+4. Then plan step 3 (Eye), per PLAN B2.
+5. Awaiting Koppelmans reply (motor data).

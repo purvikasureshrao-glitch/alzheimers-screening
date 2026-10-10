@@ -211,14 +211,21 @@ TensorFlow/Keras.
 | Interventions input | Speaker per line INV `[0,0,1]` / PAR `[0,1,0]` / pad `[1,0,0]`, first→last PAR line, length 32 |
 | ComParE | `SMILExtract -C IS13_ComParE.conf` per full-wave file (6,373 features) |
 | Scaler + PCA(21) | Fitted per fold on the training part only |
-| Disfluency model | BN → 16 → 16 → 24 → 24 (ReLU, BN, dropout 0.2/0.2/0.1/0.1) → softmax 2 (L2 0.01 / L1 0.01) |
-| Acoustic model | Dense 24 ReLU (L2/L1 0.01) → BN → dropout 0.2 → softmax 2 |
-| Interventions model | LSTM 16 → BN → dropout 0.2 → Dense 16 ReLU → BN → softmax 2 |
+| Disfluency model (`create_pause_model`, re-read 2026-10-09) | BN → [Dense ReLU → BN → Dropout] × 4 (16, 16, 24, 24; dropout 0.2/0.2/0.1/0.1) → Dense 2 softmax with kernel l2(0.01) + activity l1(0.01). Hidden layers unregularised |
+| Acoustic model (`create_compare_model`) | Dense 24 ReLU (kernel l2 0.01 + activity l1 0.01) → BN → dropout 0.2 → Dense 2 softmax (kernel l2 0.01 + activity l1 0.01). Activity l1 on a softmax output is constant (sums to 1) → no effect |
+| Interventions model | LSTM 16 → BN → dropout 0.2 → Dense 16 ReLU → BN → Dense 2 softmax. No regularisers. Sequence length: `config.py` 32 (the `dataset.py` default is 40) |
 | Code hparams | lr 0.00125 / batch 24 (disfluency, interventions); lr 0.01 / batch 16 (acoustic); 2000 epochs; ModelCheckpoint on validation loss |
 | Paper hparams | batch 8, Adam lr 0.01 for all — **paper text is followed** (decision 2026-10-07) |
 
 Paper's evaluation saves "the best models … by monitoring the validation loss in each
 fold" — the same fold it reports on, which is optimistic. We checkpoint on an inner split.
+
+**Quirks of the official feature code (reproduced as published, 2026-10-09):** regexes run over
+the whole `.cha` text including `@` headers and `%mor`/`%gra` lines; a line counts as
+INV/PAR if it merely contains the string (so the `@Participants`/`@ID` header lines count).
+`models.py` also contains an unused 800-step Conv1D "silences" model — not part of the paper's three.
+**[OURS] ComParE:** `opensmile-python` `ComParE_2016` replaces `SMILExtract -C IS13_ComParE.conf`
+(both 6,373 features; equivalence not verified). **[OURS] PyTorch port** of the Keras models (ONNX export).
 
 Data check on disk: train 54 cc (S001…) + 54 cd (S079…) full-wave `.wav`, `.cha`, meta
 with MMSE; test 48 (S160…) with `test_results.txt` empty — matches the paper's split.
