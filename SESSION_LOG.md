@@ -282,3 +282,9 @@ velocity; antisaccade-error and heatmap features dropped; tracker dropout not a 
 2. Run `notebooks/eye.ipynb` on Kaggle (ADEM_TEST is CC-BY-4.0 on Zenodo); send results.
 3. Awaiting Koppelmans reply (consider a polite follow-up after ~2 weeks).
 4. Then Clock (Colab + Drive, NHATS).
+
+**Session end (2026-10-10):** Eye code committed (e6d427c); nothing uncommitted except this
+entry. Resume with: (1) user decides the ADReSS compute route — written TalkBank query via
+faculty advisor / local / Colab+Drive; Speech stays blocked until then. (2) User runs
+`notebooks/eye.ipynb` on Kaggle and sends back the metrics. (3) Koppelmans: still no reply.
+(4) Then Clock step 4 (Colab + Drive only), starting with a plain-words plan for approval.
