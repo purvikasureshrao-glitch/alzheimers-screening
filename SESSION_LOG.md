@@ -320,3 +320,16 @@ raise), PLAN B4 + step 2/5, FINDINGS 2. Tests: 26 pass, 2 skipped (sklearn/imble
 3. Adapt `notebooks/speech.ipynb` to Colab + Drive, then user runs it.
 4. Clock H4 Crop-Net code (synthetic sample generator, model, training notebook).
 5. Motor stays features-only until data exists.
+
+---
+
+## 2026-10-12 (later) — Notebooks merged to four
+
+**Decided:** one notebook per modality only: `clock.ipynb` (part A prep ready; B Crop-Net and
+C ViT are placeholders), `speech.ipynb`, `eye.ipynb`, `motor.ipynb`. Each has a
+"SEND BACK TO CLAUDE" cell after every step saying exactly which output to paste.
+**Changed:** deleted `clock_prep.ipynb`, `clock_cropnet_train.ipynb`, `clock_vit_train.ipynb`;
+new `clock.ipynb`; PLAN file map updated. (Entry above mentions `clock_prep.ipynb`; it was
+renamed to `clock.ipynb` part A.)
+**Open:** user hit a Colab Drive-mount / path problem on clock cell 1 (not a code bug);
+awaiting the `os.listdir` / `find` output to set `ROOT`.
