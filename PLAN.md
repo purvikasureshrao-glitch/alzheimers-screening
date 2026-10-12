@@ -114,7 +114,7 @@ github.com/vnckppl/FingerTappingTask.
 |---|---|---|
 | 0 | ✅ NHATS survey labels verified (2026-10-01) | |
 | 1 | Repo scaffold: layout, one notebook per modality, `common/metrics.py`, Python **3.13** locally | Local PC = editing + running the app only |
-| 2 | **Speech** end to end — runs on **Colab + Drive** (ADReSS can't go to Kaggle, FINDINGS 7; decided 2026-10-12) | Code done; `notebooks/speech.ipynb` still has Kaggle paths, to be adapted |
+| 2 | **Speech** end to end — runs on **Colab + Drive** (ADReSS can't go to Kaggle, FINDINGS 7; decided 2026-10-12) | Code done; `notebooks/speech.ipynb` adapted to Colab + Drive 2026-10-12 |
 | 3 | **Eye** — code + notebook written 2026-10-10, awaiting Kaggle run | `eye/{features,cv}.py`, `notebooks/eye.ipynb` |
 | 4 | **Clock** Crop-Net → crop → QC → ViT | **Colab + Google Drive only** (NHATS may not go to Kaggle, D) |
 | 5 | **Motor** features + loader + Balanced RF CV — code written 2026-10-12, no data, runs on Kaggle | `motor/{features,loader,cv}.py`, `notebooks/motor.ipynb` |
