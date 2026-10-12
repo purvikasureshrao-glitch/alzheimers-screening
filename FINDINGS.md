@@ -87,6 +87,23 @@ corresponding author."
 
 No published, validated cut-off exists for this task, so no threshold is used.
 
+**Re-searched 2026-10-12 (web, standard + extended):** still no open keyboard tapping
+dataset with AD/MCI labels. Found only Parkinson's sets (HUBU-FIS video, Zenodo
+10.5281/zenodo.17738775, CC-BY; Kasemsap figshare 53 PD / 47 HC; MIT-CS1PD PhysioNet
+typing) and light-diode / smartphone AD studies without public data. Not usable for a
+CN/aMCI/AD classifier.
+
+**Reference task code read 2026-10-12** (github.com/vnckppl/FingerTappingTask, AGPL-3.0,
+PsychoPy; `lastrun.py`): key-down only (`event.getKeys`), keys `lshift`/`rshift`, 4 tasks x 3
+repetitions x 10 s, times in seconds from the task screen flip, saved with `saveAsWideText`
+(fields `Lk/Rk/Bk/Ak.keys` and `.rt`). No release times, no sample data.
+
+**Paper's metric definitions (read 2026-10-12, PMC10578230):** 20 continuous metrics = 3
+dominant + 3 non-dominant + 7 dual + 7 alternating; the paper gives names and one-line
+descriptions but **no formulas**; "onset delay" is not defined; gap = period >= 1 s with no
+key; trials combined by median (Table 4 footnote) but "maximum" for gap measures (Table 3
+footnote). Dominant / non-dominant come from the Dutch Handedness Questionnaire.
+
 **Their stated limitations:** sample size modest for machine learning; 98% white
 sample limits generalizability; no tau biomarker data; ~30-week gap between imaging
 and behavioural assessment; the finger tapping test itself is unvalidated and

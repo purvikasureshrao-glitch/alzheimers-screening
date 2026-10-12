@@ -103,7 +103,8 @@ github.com/vnckppl/FingerTappingTask.
 | Classifier | Balanced Random Forest (imbalanced-learn), 50 trees, max depth 5, gini (paper's GridSearchCV result) |
 | Output classes | The dataset's own groups: CN / aMCI / AD (3 classes) |
 | Threshold | No published validated cut-off exists → none invented |
-| Route | User emails Koppelmans et al. for the data. Meanwhile: task + features + classifier code. Until data arrives: **features only, no verdict** |
+| Route | User emailed Koppelmans et al.; **no reply, decision 2026-10-12: build without waiting.** Code: `motor/features.py` (18 features), `motor/loader.py` (PsychoPy CSV, unverified), `motor/cv.py` (Balanced RF, repeated stratified 5-fold). Until data arrives: **features only, no verdict** |
+| Feature formulas | The paper names metrics but gives no formulas. Ours [OURS], in `motor/features.py`: taps/s = n/10 s; variance over ten 1-s counts; dual pair = mutual nearest key within 0.5 s; gap = >=1 s with no press incl. onset and tail; gap_count = conditions (of 3) with a gap in any trial |
 
 ---
 
@@ -113,10 +114,10 @@ github.com/vnckppl/FingerTappingTask.
 |---|---|---|
 | 0 | ✅ NHATS survey labels verified (2026-10-01) | |
 | 1 | Repo scaffold: layout, one notebook per modality, `common/metrics.py`, Python **3.13** locally | Local PC = editing + running the app only |
-| 2 | **Speech** end to end | Data ready, method fully specified |
+| 2 | **Speech** end to end — runs on **Colab + Drive** (ADReSS can't go to Kaggle, FINDINGS 7; decided 2026-10-12) | Code done; `notebooks/speech.ipynb` still has Kaggle paths, to be adapted |
 | 3 | **Eye** — code + notebook written 2026-10-10, awaiting Kaggle run | `eye/{features,cv}.py`, `notebooks/eye.ipynb` |
 | 4 | **Clock** Crop-Net → crop → QC → ViT | **Colab + Google Drive only** (NHATS may not go to Kaggle, D) |
-| 5 | **Motor** task + features (+ classifier when data arrives) | |
+| 5 | **Motor** features + loader + Balanced RF CV — code written 2026-10-12, no data, runs on Kaggle | `motor/{features,loader,cv}.py`, `notebooks/motor.ipynb` |
 | 6 | ONNX export + parity check for every model | |
 | 7 | Local laptop app: one endpoint per test + "see what was captured" views | |
 | 8 | LLM summary (local 7-8B via Ollama), schema-validated | |

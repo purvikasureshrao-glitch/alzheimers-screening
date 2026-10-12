@@ -288,3 +288,35 @@ entry. Resume with: (1) user decides the ADReSS compute route — written TalkBa
 faculty advisor / local / Colab+Drive; Speech stays blocked until then. (2) User runs
 `notebooks/eye.ipynb` on Kaggle and sends back the metrics. (3) Koppelmans: still no reply.
 (4) Then Clock step 4 (Colab + Drive only), starting with a plain-words plan for approval.
+
+---
+
+## 2026-10-12 — Clock H1-H3, Motor code, platform decisions
+
+**Discussed:**
+- Resumed from the 2026-10-10 entry. User asked for H1/H2 in plain words, how epochs and
+  training work for Clock, and a full done / to-do status.
+
+**Decided:**
+- **Speech and Clock run on Colab + Drive** (ADReSS and NHATS can't go to Kaggle).
+  **Eye and Motor run on Kaggle** (ADEM_TEST is CC-BY; no motor data).
+- **Koppelmans: no reply, stop waiting.** Motor is built from the paper without data.
+- Clock split is numpy-stratified (sklearn's scipy DLL is blocked locally by Smart App
+  Control).
+
+**Found:**
+- Motor data search repeated: no public labelled AD/MCI tapping set (FINDINGS 2).
+- Reference task logs key-down only; paper gives no metric formulas (FINDINGS 2).
+
+**Changed:** commit 51ebe54 = `clock/{labels,split,preprocess}.py`,
+`tests/test_clock_prep.py`, `notebooks/clock_prep.ipynb`, PLAN file map. Then (uncommitted at
+time of writing) `motor/{features,loader,cv}.py`, `tests/test_motor_*.py`,
+`notebooks/motor.ipynb`, `common/metrics.py` (+`auc_ovr_ci`, bootstrap skips resamples that
+raise), PLAN B4 + step 2/5, FINDINGS 2. Tests: 26 pass, 2 skipped (sklearn/imblearn CV).
+
+**Open / next:**
+1. User runs `notebooks/clock_prep.ipynb` on Colab (counts + name-box verdict).
+2. User runs `notebooks/eye.ipynb` on Kaggle.
+3. Adapt `notebooks/speech.ipynb` to Colab + Drive, then user runs it.
+4. Clock H4 Crop-Net code (synthetic sample generator, model, training notebook).
+5. Motor stays features-only until data exists.

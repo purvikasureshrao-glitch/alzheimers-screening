@@ -33,7 +33,10 @@ def _bootstrap(stat, y_true, y_other, groups, n_boot, seed):
         pick = np.concatenate([rows[g] for g in rng.choice(ids, size=len(ids))])
         if len(np.unique(y_true[pick])) < 2:  # resample lost a class: undefined, skip
             continue
-        vals.append(stat(y_true[pick], y_other[pick]))
+        try:
+            vals.append(stat(y_true[pick], y_other[pick]))
+        except ValueError:  # e.g. a multi-class resample missing one class
+            continue
     if not vals:
         raise ValueError("every bootstrap resample had a single class")
     return np.percentile(vals, [2.5, 97.5])
@@ -55,6 +58,16 @@ def f1_ci(y_true, y_pred, protocol, groups=None, n_boot=2000, seed=0):
 def auc_ci(y_true, y_score, protocol, groups=None, n_boot=2000, seed=0):
     lo, hi = _bootstrap(roc_auc_score, y_true, y_score, groups, n_boot, seed)
     return Result("AUC", roc_auc_score(y_true, y_score), lo, hi,
+                  len(np.unique(groups)) if groups is not None else len(y_true), protocol)
+
+
+def auc_ovr_ci(y_true, y_prob, protocol, groups=None, n_boot=2000, seed=0):
+    """Macro one-vs-rest AUC for >2 classes; `y_prob` is (n, n_classes)."""
+    f = lambda t, p: roc_auc_score(t, p, multi_class="ovr", average="macro",
+                                   labels=list(range(p.shape[1])))
+    y_prob = np.asarray(y_prob)
+    lo, hi = _bootstrap(f, y_true, y_prob, groups, n_boot, seed)
+    return Result("AUC (macro OvR)", f(np.asarray(y_true), y_prob), lo, hi,
                   len(np.unique(groups)) if groups is not None else len(y_true), protocol)
 
 
