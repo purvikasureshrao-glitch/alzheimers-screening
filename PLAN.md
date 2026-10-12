@@ -265,8 +265,8 @@ on test: balanced accuracy, F1, AUC, 95% CI (bootstrap over SPIDs), clock-score 
 ### File map
 | Step | File | Main functions |
 |---|---|---|
-| H1 | `clock/labels.py` | `index_images()`, `read_sp_file(round)`, `build_label_table()` |
-| H2 | `clock/split.py` | `split_by_spid()` |
+| H1 | `clock/labels.py`, `notebooks/clock_prep.ipynb` (H1-H3) | `index_images()`, `read_sp_file(round)`, `build_label_table()` (writes an `exclude_reason` column; `summarize()` prints counts) |
+| H2 | `clock/split.py` | `split_by_spid()`, `report()` (numpy stratified split; sklearn is blocked locally) |
 | H3 | `clock/preprocess.py` | `load_tif()`, `invert()`, `remove_name_boxes()`, `crop_to_mass()`, `pad_square()` |
 | H4 | `clock/cropnet/model.py`, `clock/cropnet/synth.py`, `notebooks/clock_cropnet_train.ipynb` | `CropNet`, `make_sample()` |
 | H5 | `clock/crop.py` | `multi_step_crop(img, model, iterations=3)` |
