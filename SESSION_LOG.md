@@ -344,3 +344,13 @@ Clock-A notebooks now wrap each step in `with log.tee(...)`; output is appended 
 not logged. Checkpoint/resume for Crop-Net and ViT will be written with those notebooks.
 **Note:** Clock part A is CPU work (GPU only for parts B and C); Speech's networks are tiny,
 the slow part is CPU ComParE extraction.
+
+---
+
+## 2026-10-12 (end) — Drive full: outputs off Drive
+
+**Decided:** Drive is full, so **no results are written to Drive**. Notebooks print results
+(user pastes them to Claude); logs/CSVs go to Colab's temporary disk `/content/out`, with an
+optional `files.download` cell. Input data still read from Drive. `speech.ipynb`, `clock.ipynb`
+changed. **Open:** Crop-Net / ViT checkpoints (~hundreds of MB each) need either Drive space
+or accept losing progress on disconnect - decide when those notebooks are written.
