@@ -333,3 +333,14 @@ new `clock.ipynb`; PLAN file map updated. (Entry above mentions `clock_prep.ipyn
 renamed to `clock.ipynb` part A.)
 **Open:** user hit a Colab Drive-mount / path problem on clock cell 1 (not a code bug);
 awaiting the `os.listdir` / `find` output to set `ROOT`.
+
+---
+
+## 2026-10-12 (later still) — Run logging for Colab
+
+**Added:** `common/runlog.py` (`RunLog.log`, `RunLog.tee`) + `tests/test_runlog.py`. Speech and
+Clock-A notebooks now wrap each step in `with log.tee(...)`; output is appended to
+`Alzheimers/logs/speech.log` and `Alzheimers/clock_out/clock.log` on Drive. The image grid is
+not logged. Checkpoint/resume for Crop-Net and ViT will be written with those notebooks.
+**Note:** Clock part A is CPU work (GPU only for parts B and C); Speech's networks are tiny,
+the slow part is CPU ComParE extraction.
