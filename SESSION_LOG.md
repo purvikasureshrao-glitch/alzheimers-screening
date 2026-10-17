@@ -469,3 +469,14 @@ Trained on all 108; accuracy statement is still only the 5-fold CV (FINDINGS 9).
 **Added:** `speech/whisper_features.py` (5 features recoverable from Whisper words + timestamps: fillers, mhm/hm, repetition, pause >= 0.5 s [fixed in advance, not tuned], word rate; intervention rate, retracing, replacement, incomplete, prolongation, trailing-off dropped, not recoverable), `disfluency_whisper` network (5 inputs) in `models.py`, `cross_validate_single` in `cv.py`, `notebooks/speech_whisper.ipynb`. `speech_code.tar` rebuilt.
 **Notebook does:** Whisper `small` (fixed) with word timestamps on all 108 recordings; human-vs-Whisper feature table (Spearman, means, zero fractions); 5-fold CV of the 5-feature network, same protocol as FINDINGS 9. Word transcripts are deleted before the download zip.
 **Next:** user runs it on Colab, pastes the table and CV lines; record in FINDINGS 9b. Then app model for live Speech = whichever Disfluency variant matches the live input (the 11-feature one cannot be fed from Whisper).
+
+---
+
+## 2026-10-17 (whisper result)
+
+**Ran (Colab):** `speech_whisper.ipynb`, Whisper `small`, 108 files, 464 s. Results in FINDINGS 9b:
+5-feature network balanced accuracy 0.639 (0.546-0.731) vs 0.759 for human-transcript features; Whisper
+drops most fillers/repeats; pause feature uncorrelated with human marks (rho 0.02).
+**Saved:** `results/speech_whisper*.csv/.log`. **Open:** whether a larger Whisper model or a verbatim ASR
+recovers more (would be a second, pre-stated model size, reported next to `small`, not picked on CV).
+Not exported to ONNX: the 5-feature network is not worth shipping at this level.

@@ -336,3 +336,30 @@ The ensemble does not beat Disfluency alone. This is cross-validation on one dat
 training set, matched for age/gender); no held-out test and no domain-shift check yet (rule 7), so
 nothing here supports a patient-facing claim. Not compared to the paper's figures (different
 evaluation, rule 6). `speech_oof.csv` (out-of-fold predictions) was produced on Colab.
+
+### 9b. Speech — Whisper transcript check (run on Colab 2026-10-17)
+
+Whisper `small`, word timestamps, ADReSS train n=108 (54/54), prompt only discourages dropping fillers.
+Five features recoverable from words + timing (`speech/whisper_features.py`; pause = gap >= 0.5 s, fixed in advance):
+
+| Feature | Spearman vs human | Human mean | Whisper mean | Zero in human / Whisper |
+|---|---|---|---|---|
+| fillers | 0.269 | 1.030 | 0.145 | 3% / 51% |
+| mhm_hm | 0.320 | 0.200 | 0.029 | 50% / 85% |
+| repetition | 0.241 | 0.429 | 0.102 | 18% / 61% |
+| pause | 0.020 | 0.185 | 1.535 | 41% / 2% |
+| word_rate | 0.852 | 1.245 | 0.319 | 0% / 0% |
+
+Median words per recording: 369 (human features) vs 100 (Whisper). The human word count is inflated by the
+official code's quirk of counting `@header`/`%mor` text (FINDINGS 5), so word-rate means are not on one scale;
+only the rank correlation is meaningful.
+
+Network on the 5 Whisper features (Disfluency architecture, 5 inputs), 5-fold CV, n=108, stratified, seed 0:
+balanced accuracy **0.639 (0.546-0.731)**, F1 0.629 (0.510-0.730), AUC 0.643 (0.531-0.749).
+
+Reading: Whisper `small` loses most disfluencies (fillers 14% of human count, 51% of recordings with none);
+pause counts do not track the human `(.)` marks at all (rho 0.02, different definition). Only word rate
+carries over. The Whisper-input network is above chance but clearly below the human-transcript Disfluency
+(0.759, 0.669-0.841; the CIs overlap but the point estimate drops 0.12). The 11-feature ONNX
+(`speech_disfluency.onnx`) cannot be fed from Whisper. **Live Speech is therefore weak:** nothing here
+supports a patient-facing claim. One model size, one prompt, one pause threshold were tried.

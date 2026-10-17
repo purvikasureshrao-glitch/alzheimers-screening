@@ -1,0 +1,39 @@
+2026-10-17 14:59:09  ---- session start ----
+
+2026-10-17 14:59:09  >>> labels and human features
+{0: 54, 1: 54} n = 108
+(108, 11)
+<<< labels and human features done in 0.2s
+
+2026-10-17 14:59:09  >>> whisper
+0 S001 200 words 14s
+10 S013 68 words 58s
+20 S027 115 words 93s
+30 S039 217 words 129s
+40 S058 100 words 173s
+50 S072 121 words 204s
+60 S086 55 words 248s
+70 S100 76 words 289s
+80 S118 203 words 356s
+90 S135 64 words 392s
+100 S145 83 words 430s
+done 108
+<<< whisper done in 463.5s
+
+2026-10-17 15:06:53  >>> feature comparison
+Whisper features (108, 5) | all finite: True
+   feature  spearman  human_mean  whisper_mean  human_zero_frac  whisper_zero_frac
+   fillers     0.269       1.030         0.145             0.03               0.51
+    mhm_hm     0.320       0.200         0.029             0.50               0.85
+repetition     0.241       0.429         0.102             0.18               0.61
+     pause     0.020       0.185         1.535             0.41               0.02
+ word_rate     0.852       1.245         0.319             0.00               0.00
+words per recording: human-transcript vs whisper (median): 369 100
+<<< feature comparison done in 0.0s
+
+2026-10-17 15:08:49  >>> whisper-feature CV
+disfluency_whisper (5 features)
+   balanced accuracy 0.639 (95% CI 0.546-0.731), n=108, 5-fold CV, n=108, stratified, seed 0
+   F1 0.629 (95% CI 0.510-0.730), n=108, 5-fold CV, n=108, stratified, seed 0
+   AUC 0.643 (95% CI 0.531-0.749), n=108, 5-fold CV, n=108, stratified, seed 0
+<<< whisper-feature CV done in 49.2s
