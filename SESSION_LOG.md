@@ -510,3 +510,13 @@ so its flags on them are not an accuracy. Eye stays an inconclusive pilot; webca
 **Changed:** `colab_upload/clock_data_lean.tar` (1.04 GB: 11 image zips + 11 Stata survey zips) replaces the 2.0 GB
 `clock_data.tar` in `clock.ipynb`. `labels.py` reads only `*STATA*.zip`, so the SAS copies (~1 GB) were unused.
 Not yet run on Colab (label counts should still be 54,027 images indexed).
+
+---
+
+## 2026-10-17 (motor reference) — Lima dataset does not match
+
+**Checked:** Lima et al. 2024 is smartphone-touchscreen tapping, 30 s, not keyboard shift keys, 10 s, 4 conditions.
+Withdrawn as a healthy reference for the Motor features (FINDINGS 2 note). Motor stays features-only until a
+matching dataset exists.
+**Decided with user:** four-modality combination = documented rule "2+ of 4 flagged", no accuracy claim.
+Clock outputs the NHATS-provided classification/score (no invented stages). Eye/Speech flag only.

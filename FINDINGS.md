@@ -77,6 +77,12 @@ depth 5, 50 trees, gini; five-fold CV on a 70% train / 30% test split. Target is
 **3-class**: control / amnestic MCI / AD. Data: "available on request from the
 corresponding author."
 
+**Lima 2024 checked 2026-10-17 (search result of the Scientific Data paper, PMC11582313; the figshare page returned 403):**
+smartphone **touchscreen** tapping, 30 s, central screen area, one or both hands, 176 healthy adults 18-74. It is **not**
+the keyboard shift-key, 10 s, 4-condition task of Koppelmans, so it cannot serve as a healthy reference range for our
+features (different device, duration and conditions, younger ages). Earlier idea of an "atypical vs healthy reference"
+flag from this dataset is therefore withdrawn.
+
 **Public labelled tapping data — searched 2026-10-07, none found:**
 
 | Dataset | Groups | Access | Usable? |
