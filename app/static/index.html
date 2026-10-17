@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory Screening</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2230; --muted:#5b6475; --line:#dde1e8; --accent:#2457d6; --flag:#b4540a; --ok:#1f7a4d; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --card:#1b2030; --ink:#e8ebf2; --muted:#a2abbd; --line:#2c3347; --accent:#7ea2ff; --flag:#f0a15c; --ok:#6fcf9b; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin: 0 0 4px; }
+  p { margin: 6px 0; } .muted { color: var(--muted); font-size: .92rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin:14px 0; }
+  .tag { display:inline-block; font-size:.8rem; padding:2px 8px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
+  .tag.flagged { color:var(--flag); border-color:var(--flag); } .tag.not_flagged { color:var(--ok); border-color:var(--ok); }
+  button { font:inherit; padding:10px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+  button.secondary { background:transparent; color:var(--accent); } button:disabled { opacity:.5; cursor:default; }
+  #tap { width:100%; height:140px; font-size:1.3rem; margin-top:10px; }
+  input[type=number] { font:inherit; width:6rem; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  dl { display:grid; grid-template-columns: auto 1fr; gap:2px 12px; margin:8px 0; } dt { color:var(--muted); }
+  .caveat { border-left:3px solid var(--line); padding-left:10px; margin-top:8px; }
+  #timer { font-size:2rem; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Memory screening</h1>
+  <p class="muted">Four short, independent screens. This is a screening aid, not a diagnosis. Everything stays on this computer; nothing is uploaded and no name is stored.</p>
+
+  <div id="cards"></div>
+
+  <section class="card" id="overall-card">
+    <h2>Overall</h2>
+    <p class="muted">The only combination is a stated rule: 2 or more flagged screens recommend clinical follow-up. It has no accuracy figure.</p>
+    <button id="sum-btn">Write the summary</button>
+    <div id="overall"></div>
+  </section>
+</main>
+
+<script>
+const ORDER = ["clock", "motor", "eye", "speech"];
+const NAMES = { clock: "Clock drawing", motor: "Finger tapping", eye: "Eye movement", speech: "Speech" };
+const results = {};
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+
+function renderCard(m) {
+  const r = results[m], card = document.getElementById("card-" + m);
+  const body = card.querySelector(".body");
+  body.replaceChildren();
+  const tag = el("span", "tag " + r.status, { flagged: "Flagged", not_flagged: "Not flagged", not_run: "Not run" }[r.status]);
+  body.append(tag, el("p", "", r.label));
+  const keys = Object.keys(r.measured || {});
+  if (keys.length) {
+    const dl = el("dl");
+    keys.forEach(k => { dl.append(el("dt", "", k), el("dd", "", Array.isArray(r.measured[k]) ? (r.measured[k].join(", ") || "none") : r.measured[k])); });
+    body.append(dl);
+  }
+  body.append(el("p", "muted", "Evidence: " + r.evidence), el("p", "muted caveat", "Limits: " + r.caveat));
+}
+
+async function post(url, data) {
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  return res.json();
+}
+
+function buildMotor(card) {
+  const body = card.querySelector(".extra");
+  body.innerHTML = "";
+  const intro = el("p", "muted", "Use your dominant hand. Tap the button below with one finger, as fast as you can, for 30 seconds. You get a 3 second countdown.");
+  const age = el("input"); age.type = "number"; age.min = 18; age.max = 110; age.value = 70;
+  const ageLabel = el("label", "", "Age: "); ageLabel.append(age);
+  const start = el("button", "", "Start the test");
+  const timer = el("div"); timer.id = "timer"; timer.setAttribute("aria-live", "polite");
+  const tap = el("button", "secondary", "Tap here"); tap.id = "tap"; tap.disabled = true;
+  body.append(intro, ageLabel, document.createElement("br"), start, timer, tap);
+  start.onclick = () => {
+    start.disabled = true; let n = 3; timer.textContent = n;
+    const cd = setInterval(() => {
+      n--; if (n > 0) { timer.textContent = n; return; }
+      clearInterval(cd); runTrial(Number(age.value), timer, tap, start);
+    }, 1000);
+  };
+}
+
+function runTrial(age, timer, tap, start) {
+  const taps = []; const t0 = performance.now(); tap.disabled = false; tap.focus();
+  const on = () => taps.push((performance.now() - t0) / 1000);
+  tap.addEventListener("pointerdown", on);
+  const tick = setInterval(async () => {
+    const left = 30 - (performance.now() - t0) / 1000;
+    timer.textContent = Math.max(0, left).toFixed(0) + " s";
+    if (left > 0) return;
+    clearInterval(tick); tap.disabled = true; tap.removeEventListener("pointerdown", on); timer.textContent = "Done";
+    results.motor = await post("/api/motor", { taps: taps.filter(t => t <= 30), age });
+    renderCard("motor"); start.disabled = false; start.textContent = "Repeat the test";
+  }, 200);
+}
+
+document.getElementById("sum-btn").onclick = async () => {
+  const out = document.getElementById("overall"); out.replaceChildren(el("p", "muted", "Writing…"));
+  const data = await post("/api/summary", { results: ORDER.map(m => results[m]) });
+  out.replaceChildren(el("p", "", data.combined.text));
+  ORDER.forEach(m => { const h = el("h2", "", NAMES[m]); out.append(h, el("p", "", data.summary.modalities[m])); });
+  out.append(el("p", "muted", "Written by: " + data.summary.source + (data.summary.note ? " (" + data.summary.note + ")" : "")));
+};
+
+(async () => {
+  const ev = await (await fetch("/api/evidence")).json();
+  const host = document.getElementById("cards");
+  ORDER.forEach(m => {
+    results[m] = ev.not_run[m];
+    const card = el("section", "card"); card.id = "card-" + m;
+    card.append(el("h2", "", NAMES[m]), el("div", "extra"), el("div", "body"));
+    host.append(card); renderCard(m);
+    if (m === "motor") buildMotor(card);
+  });
+})();
+</script>
+</body>
+</html>

@@ -557,3 +557,19 @@ smoke test > full run > two download zips). Deviations in FINDINGS 3e. `clock_co
 Flags in-sample: 2/176 overall, 0/15 aged 50+. Sensitivity unknown.
 **Clock:** `clock_all.ipynb` now splits the full run into part 1 (prep, Crop-Net, crop) > Crop-Net checkpoint download > part 2 (ViT,
 metrics, ONNX). `clock_code.tar` rebuilt. User starting the run; PC must not sleep (Colab disconnects otherwise).
+
+---
+
+## 2026-10-18 (app skeleton)
+
+**Added:** `app/` (stdlib only, no installs): `schema.py` (Result, display order), `evidence.py` (each modality's measured
+evidence + caveat, copied from FINDINGS), `combine.py` (rule: 2+ of 4 flagged -> follow-up, no score, no accuracy claim),
+`motor.py` (taps + age -> flag via `motor/reference.py` and `models/motor_reference.json`), `summary.py` (Ollama prose summary,
+JSON-validated: rejects diagnosis/stage/severity wording and numbers not in the input, falls back to a fixed template; never
+called unless all four screens ran), `server.py` (local HTTP on 127.0.0.1:8765, no request log), `static/index.html`
+(30 s tapping test, four cards in order Clock > Motor > Eye > Speech, summary button), `runners.py` (stubs for eye/speech/clock).
+`tests/test_app.py`: 14 tests pass (`PYTHONPATH=. python tests/test_app.py`).
+**Run:** `python -m app.server` from the repo root, open http://127.0.0.1:8765. Needs `models/motor_reference.json`
+(`python motor/reference.py datasets/Lima.csv models/motor_reference.json`).
+**Not built:** eye capture (MediaPipe/WebGazer) + ONNX call, clock photo cleaning + ONNX call (waits for Colab), live speech (research only),
+ONNX runtime install, "see what was captured" views, Ollama model not installed/tested.
