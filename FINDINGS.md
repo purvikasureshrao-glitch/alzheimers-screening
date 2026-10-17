@@ -415,3 +415,18 @@ sensible age-matched range impossible from this dataset.
 - Split by SPID (seed 0): train 47,614 images / 9,596 SPIDs / 4.8% dementia; val 956 / 202 / 4.4%; test 5,344 / 1,089 / 4.8%;
   **SPIDs in more than one split: 0.** (Val is 956, not the requested ~1,000, because whole SPIDs are assigned.)
 - Dementia prevalence of 4.8% means balanced accuracy, not accuracy, is the headline (rule 6).
+
+### 3e. Clock build: deviations from Bone et al. (code written 2026-10-17, not yet run)
+
+| Item | Paper | Ours [OURS] | Why |
+|---|---|---|---|
+| Image scale | full 2560x3312 | area-averaged 4x on load; name-box size and crop margins divided by 4 | 54k TIFFs would take hours on Colab's 2 CPUs |
+| ViT | ViT-L/16 SWAG, 512 px | ViT-B/16 (torchvision ImageNet-1k), 224 px, no position-embedding interpolation | free-Colab GPU time, no Drive for checkpoints |
+| ViT head | 3 x FC(1024) + FC 2 | FC(768->1024), FC(1024->1024) x2, FC(1024->2), sigmoid | B/16 has 768-d features |
+| Crop-Net output | Figure 1 shows 1x64x64 | 2x64x64 (area, area x score/5) | supplement's two-channel target (PLAN H4) |
+| Crop-Net training | until early stopping, writing source unspecified | 6,000 iterations max, 90 min cap, random-scribble "writing", synthetic val 500 | compute budget |
+| Crop QC (H6) | clock-by-clock rejection 9.3%, retrain on passing crops | descriptive stats only, no rejection, no retrain | needs the user's ~300 grades |
+| Epochs | not specified | fixed 12,000 balanced draws per epoch, patience 4 epochs | |
+| Threshold | not stated | chosen on natural validation set (max balanced accuracy) | |
+Task heads: output 0 = clock score / 5 (x5 at use), output 1 = dementia probability; MSE on both. Reported on test: balanced
+accuracy, F1, AUC (95% CI, bootstrap over SPIDs), clock-score MSE. NHATS-only evidence; photo/webcam domain shift unvalidated.

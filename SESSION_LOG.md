@@ -538,3 +538,12 @@ this as "outside healthy reference range (unvalidated, young reference)", never 
 **Ran (Colab):** Clock Part A (H1-H2). Results in FINDINGS 3d. 54,027 indexed, 53,914 kept, 0 SPIDs across splits.
 **Open:** step 3 cleaning grid (H3 name-box removal + rough crop): user reports the crop looks "somewhat cropped" -
 details asked. **Next:** write Part B (Crop-Net) and Part C (ViT) as one run-all notebook with checkpoints.
+
+---
+
+## 2026-10-17 (clock run-all written, NOT run)
+
+**Added (no local test possible: no numpy/torch locally):** `clock/cropnet/{model,synth,train}.py`, `clock/crop.py`,
+`clock/vit/{model,train}.py`, `clock/pipeline.py`, `preprocess.rough_crop_512`, `notebooks/clock_all.ipynb` (labels > split >
+smoke test > full run > two download zips). Deviations in FINDINGS 3e. `clock_code.tar` rebuilt.
+**First thing on Colab:** the smoke test; any bug in the untested code surfaces there in about 10 min.

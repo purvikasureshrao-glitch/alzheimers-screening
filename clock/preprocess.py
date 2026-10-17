@@ -76,3 +76,21 @@ def pad_square(img, size=None):
 def rough_crop(img):
     """H3 in one call: invert -> name boxes off -> 96% / +50 px crop."""
     return crop_to_mass(remove_name_boxes(invert(img)))
+
+
+PRE_REDUCE = 4   # [OURS] images are area-averaged 4x on load so 54k 2560x3312 TIFFs preprocess in minutes, not hours
+
+
+def load_reduced(src, reduce=PRE_REDUCE):
+    """Like load_tif but area-averages by `reduce` first (PIL reduce)."""
+    im = Image.open(io.BytesIO(src) if isinstance(src, (bytes, bytearray)) else src).convert("L")
+    if reduce > 1:
+        im = im.reduce(reduce)
+    return np.asarray(im, dtype=np.float32) / 255.0
+
+
+def rough_crop_512(src, reduce=PRE_REDUCE):
+    """H3 at 1/reduce scale (name-box size and crop margin scaled the same way) -> uint8 512x512, ink bright."""
+    img = remove_name_boxes(invert(load_reduced(src, reduce)), min_side=max(4, 40 // reduce))
+    img = pad_square(crop_to_mass(img, margin=max(2, 50 // reduce)), 512)
+    return (np.clip(img, 0, 1) * 255).astype(np.uint8)
