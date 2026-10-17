@@ -502,3 +502,11 @@ n=20; detector check 28/60 recordings with 0 saccades). Export parity: ONNX == s
 **Saved:** `models/eye_flag.onnx`, `models/eye_features.json`, `results/eye.log`. Trained on all 20 subjects,
 so its flags on them are not an accuracy. Eye stays an inconclusive pilot; webcam transfer unvalidated.
 **Next:** Clock part A on Colab.
+
+---
+
+## 2026-10-17 (clock bundle) — lean NHATS bundle
+
+**Changed:** `colab_upload/clock_data_lean.tar` (1.04 GB: 11 image zips + 11 Stata survey zips) replaces the 2.0 GB
+`clock_data.tar` in `clock.ipynb`. `labels.py` reads only `*STATA*.zip`, so the SAS copies (~1 GB) were unused.
+Not yet run on Colab (label counts should still be 54,027 images indexed).
