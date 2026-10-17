@@ -442,3 +442,11 @@ shield that blocked them). Results in new FINDINGS section 9: ensemble balanced 
 **Note:** `speech_oof.csv` exists in Colab `/content/out` but the notebook only downloads the log; add it
 to the download cell. Not run yet: domain-shift check for Speech.
 **Next:** Clock part A on Colab, then Motor synthetic check; add oof CSV to speech download cell.
+
+---
+
+## 2026-10-17 (export) — Speech ONNX export written (not yet run)
+
+**Added:** `speech/export.py` (final fit on all 108, ONNX for Disfluency, Acoustic prep = scaler+PCA, Acoustic net, parity checks, `speech_features.json`); `speech.ipynb` sections 6-7 (export + downloads). `speech_code.tar` rebuilt.
+**Not exported:** Interventions (research-only). **Still open for Speech:** Whisper-transcript features validated against human transcripts; domain shift (rule 7).
+**Eye:** export cells exist in `eye.ipynb`, but `models/` is empty, so no Eye ONNX has been saved locally yet.
