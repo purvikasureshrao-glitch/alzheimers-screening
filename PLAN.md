@@ -58,7 +58,7 @@ Source: `Paper/Speech.pdf` + official code github.com/wazeerzulfikar/alzheimers-
 | Training | **Paper text:** batch 8, Adam lr 0.01, categorical cross-entropy. Layer sizes from code (paper shows them only in an image). Code's own hparams differ — recorded, not used |
 | Evaluation | 5-fold CV on the 108 labelled subjects |
 | **[OURS]** checkpointing | Paper saved the best model on the fold it reported on (optimistic). We use an inner validation split |
-| **[OURS]** live use | Laptop mic → **Whisper** (local) transcript with word timings, pauses from gaps. Live verdict = ① + ② (mean of probabilities). ③ needs an interviewer → research evaluation only. Whisper validated against the human ADReSS transcripts |
+| **[OURS]** live use | Laptop mic → **Whisper** (local) transcript with word timings, pauses from gaps. ~~Live verdict = ① + ② (mean of probabilities).~~ **Superseded 2026-10-17:** Whisper (small, medium) transcripts lose most disfluencies; a network on the recoverable features reaches 0.639 / 0.556 balanced accuracy (CIs 0.546-0.731 / 0.460-0.650, FINDINGS 9b-9c). Live Speech is research-only until a transcript source that keeps disfluencies is validated. ③ needs an interviewer → research evaluation only. Whisper validated against the human ADReSS transcripts |
 | Excluded | MMSE regression (section E); Pitt evaluation |
 | Optional | ADReSS test labels from DementiaBank → paper's own 48-subject test evaluation |
 

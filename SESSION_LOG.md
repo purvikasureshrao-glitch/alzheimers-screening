@@ -480,3 +480,14 @@ drops most fillers/repeats; pause feature uncorrelated with human marks (rho 0.0
 **Saved:** `results/speech_whisper*.csv/.log`. **Open:** whether a larger Whisper model or a verbatim ASR
 recovers more (would be a second, pre-stated model size, reported next to `small`, not picked on CV).
 Not exported to ONNX: the 5-feature network is not worth shipping at this level.
+
+---
+
+## 2026-10-17 (whisper medium) — Speech closed as research-only for live use
+
+**Ran (Colab):** Whisper `medium`. 5-feature network balanced accuracy 0.556 (0.460-0.650); CI includes 0.5.
+Recorded in FINDINGS 9c; PLAN B1 live-use row marked superseded.
+**Decision:** Speech is finished as a *research* modality: human-transcript CV result (FINDINGS 9) + saved ONNX
+for Disfluency/Acoustic (feature input needs CHAT-style transcripts, so not usable from a mic). No
+patient-facing Speech claim. In the app Speech shows "not validated / research only" (to confirm when the app is built).
+**Next:** Eye export re-run on Colab, then Clock part A, then Motor.

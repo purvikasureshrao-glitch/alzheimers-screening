@@ -363,3 +363,21 @@ carries over. The Whisper-input network is above chance but clearly below the hu
 (0.759, 0.669-0.841; the CIs overlap but the point estimate drops 0.12). The 11-feature ONNX
 (`speech_disfluency.onnx`) cannot be fed from Whisper. **Live Speech is therefore weak:** nothing here
 supports a patient-facing claim. One model size, one prompt, one pause threshold were tried.
+
+### 9c. Speech — Whisper `medium` (run on Colab 2026-10-17, same protocol as 9b)
+
+| Feature | Spearman vs human | Human mean | Whisper mean | Zero in human / Whisper |
+|---|---|---|---|---|
+| fillers | 0.260 | 1.030 | 0.136 | 3% / 54% |
+| mhm_hm | 0.501 | 0.200 | 0.039 | 50% / 82% |
+| repetition | 0.307 | 0.429 | 0.092 | 18% / 63% |
+| pause | -0.017 | 0.185 | 1.489 | 41% / 1% |
+| word_rate | 0.825 | 1.245 | 0.319 | 0% / 0% |
+
+5-feature network, 5-fold CV, n=108: balanced accuracy **0.556 (0.460-0.650)**, F1 0.529 (0.400-0.642),
+AUC 0.572 (0.462-0.683). The CI includes 0.5 → no detectable signal.
+Reading: the larger model did not recover more disfluencies (fillers 0.136 vs 0.145 with `small`), and the CV
+result is not better (0.556 vs 0.639; CIs overlap, so this is noise-level difference, not "medium is worse").
+**Conclusion:** with Whisper transcripts, the published disfluency approach does not carry over (two model
+sizes, one prompt, one pause threshold). Live Speech via Whisper is **research-only, no patient-facing claim**
+(rules 3 and 7). Not tried: a verbatim-trained ASR.
