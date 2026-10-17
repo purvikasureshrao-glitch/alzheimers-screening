@@ -19,3 +19,7 @@ node_modules/
 Thumbs.db
 .DS_Store
 .vscode/
+
+# Colab upload bundles (made locally, re-uploaded each Colab session)
+colab_upload/
+.pytest_cache/

@@ -296,3 +296,24 @@ not permitted. Not settled; see SESSION_LOG 2026-10-10.
 - L/R disconjugacy is 150-360 px: dominated by eye-tracker calibration offset, not a
   validated gaze sign. Kept because PLAN B2 lists it; interpret cautiously.
 - Antisaccade direction errors cannot be computed: the target side is not in the files.
+
+### 8b. Eye pilot result and detector check (run on Colab 2026-10-12)
+
+Measured, ADEM_TEST, n=20 (10 AD / 10 NC), leave-one-subject-out, logistic regression, cut-off 0.5:
+
+| Input | Balanced accuracy (95% CI) | AUC (95% CI) |
+|---|---|---|
+| all three tasks | 0.300 (0.101-0.505) | 0.240 (0.000-0.510) |
+| antisaccade1 | 0.300 (0.107-0.521) | 0.310 (0.090-0.593) |
+| visual_attention1 | 0.450 (0.227-0.667) | 0.300 (0.081-0.582) |
+| visual_search1 | 0.400 (0.192-0.625) | 0.340 (0.101-0.615) |
+
+Every CI includes 0.5 → **no detectable signal; inconclusive, not "30% accurate".** AUC below 0.5 is
+the known LOSO artifact on tiny balanced groups, not a reversed signal.
+
+Detector check (60 recordings): the adaptive threshold (mean + 6 SD) exceeds the recording's own
+maximum velocity in **28/60 (47%)**, giving 0 saccades by construction; the same 28 recordings
+have n_sac = 0. The cause is the published rule on ~0.3 s recordings, not the start value (any
+start >= max gives the same first step). Timestamps are integer ms with ~3 ms spacing, so
+velocity carries ~±30% quantisation noise. `231120_lfr_f` antisaccade1 has 0 valid samples.
+Decision: no detector change (an invented threshold or tuning on these 20 subjects is not allowed).

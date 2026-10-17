@@ -36,7 +36,7 @@ summarises the four results as prose for clinician review at the end.
    local app.
 5. **NHATS data must never be uploaded to Claude or any AI platform, nor to Kaggle**
    (NHATS Conditions of Use, FINDINGS 3c). Write scripts the user runs (locally or in
-   their own Colab notebook with data on Google Drive); only aggregate summaries come
+   their own Colab notebook, files uploaded per session); only aggregate summaries come
    back.
 6. Report every metric with its 95% CI, n and CV protocol. Balanced accuracy is the
    headline. Never compare our numbers to papers' leaderboard/headline figures when
@@ -47,8 +47,8 @@ summarises the four results as prose for clinician review at the end.
 
 - Windows 11, local Python **3.13** (3.11 is blocked by Smart App Control for new
   native wheels).
-- GPU: Kaggle (~30 free GPU hours/week), Colab fallback. **NHATS (clock): Colab + Google
-  Drive only — never Kaggle, never Colab's Gemini/AI assistant** (FINDINGS 3c).
+- GPU: Kaggle (~30 free GPU hours/week), Colab fallback. **NHATS (clock): Colab only, uploaded per session
+  (no Drive mount; Drive is full) — never Kaggle, never Colab's Gemini/AI assistant** (FINDINGS 3c).
 - Display order everywhere: Clock → Motor → Eye → Speech.
 - Workflow: plan on Opus, switch to Sonnet (`/model sonnet` — forward slash) for coding.
 

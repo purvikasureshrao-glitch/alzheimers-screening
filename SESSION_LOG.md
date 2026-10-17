@@ -354,3 +354,79 @@ the slow part is CPU ComParE extraction.
 optional `files.download` cell. Input data still read from Drive. `speech.ipynb`, `clock.ipynb`
 changed. **Open:** Crop-Net / ViT checkpoints (~hundreds of MB each) need either Drive space
 or accept losing progress on disconnect - decide when those notebooks are written.
+
+---
+
+## 2026-10-12 (night) — No Drive at all; upload per session
+
+**Decided:** Colab does **not** mount Drive (storage). Each new Colab session the user uploads
+`code.tar` + the data tar into the Files panel; notebooks unpack to `/content`. Results are
+printed/pasted or downloaded to `D:\Alzheimers\results\`; checkpoints (Crop-Net/ViT, later) to
+`D:\Alzheimers\models\` and re-uploaded to resume.
+**Changed:** `speech.ipynb`, `clock.ipynb` setup cells (no `drive.mount`); `.gitignore`
+(+`colab_upload/`, `.pytest_cache/`); deleted `requirements-local.lock.txt`, `.claude-dev-helper/`,
+`__pycache__`/`.pytest_cache`. Bundles built locally in `colab_upload/` (gitignored).
+
+---
+
+## 2026-10-12 (close) — Where to resume
+
+**Next, in order:**
+1. **Eye on Kaggle** (start here): private datasets `adem-test` (ADEM_TEST folder with AD/ and NC/)
+   and `alz-code` (colab_upload/code.tar or common/ + eye/). Import `notebooks/eye.ipynb`, fix
+   `REPO` / `DATA` in cell 1 (Kaggle inputs are read-only under /kaggle/input; code must be
+   unpacked to /kaggle/working/Alzheimers). Paste each SEND BACK output to Claude.
+   Option offered: rewrite eye cell 1 to unpack code.tar itself, like the Colab notebooks.
+2. **Speech on Colab:** upload code.tar + adress_train.tar to /content, run, paste results.
+3. **Clock part A on Colab:** upload code.tar + NHATS.tar (2 GB). Option: small bundle with only
+   survey files + zip listings for step 1.
+4. Motor: no data; only the synthetic sanity cell.
+
+**Per Colab session:** re-upload the tar files (disconnect wipes /content); download logs to
+D:\Alzheimers\results\ and later checkpoints to D:\Alzheimers\models\.
+**Rebuild code bundle after code changes:** `tar -cf colab_upload/code.tar common speech clock eye motor`
+**Uncommitted:** all changes from this session (notebooks, docs, .gitignore, lock-file delete).
+
+---
+
+## 2026-10-12 (after close) — All four on Colab; per-modality upload files
+
+**Decided:** ADEM_TEST would not upload to Kaggle (745 small files), so **Eye and Motor also run
+on Colab**; all four notebooks now use the same pattern (upload tars to `/content`, unpack).
+**Changed:** upload files in `colab_upload/` renamed per modality, each notebook needs only its own:
+`clock_code.tar` + `clock_data.tar` (NHATS), `speech_code.tar` + `speech_data.tar` (ADReSS train),
+`eye_code.tar` + `eye_data.tar` (ADEM_TEST, 35 MB), `motor_code.tar` (no data). Each code tar holds
+`common/` + that modality only. Old `code.tar`, `adress_train.tar`, `NHATS.tar` removed.
+`eye.ipynb`, `motor.ipynb` now have Colab setup cells; `speech`/`clock` file names updated; PLAN
+steps 3 and 5 updated.
+**Rebuild a code tar:** `tar -cf colab_upload/<m>_code.tar --exclude=__pycache__ common <m>`
+**Not yet run** on Colab (tars verified by listing only).
+
+---
+
+## 2026-10-12 (evening) — Eye pilot run and detector check
+
+**Ran (Colab):** Eye notebook on ADEM_TEST. Pilot LOSO n=20: balanced accuracy 0.300 (0.101-0.505),
+AUC 0.240 (0.000-0.510); per task 0.30 / 0.45 / 0.40. All CIs include 0.5 → inconclusive.
+**Detector check** (new last cell of `eye.ipynb`): threshold above max velocity in 28/60 recordings →
+0 saccades by construction. Cause is the published mean+6SD rule on ~0.3 s recordings; my guess
+that the start-at-max iteration was the cause was only partly right (the paper's start gives the
+same first step).
+**Decided:** no detector change, no tuning on the same 20 subjects; Eye stays an inconclusive pilot
+with webcam transfer unvalidated. Output is flagged / not flagged only, no stage (rule 3).
+**Changed:** `notebooks/eye.ipynb` (detector-check cells), `FINDINGS.md` (new 8b).
+**Open:** (a) Eye notebook and Motor have no log / download cell yet. (b) How the live app stores
+per-session results is undecided; proposal: local-only per-session JSON, no names, no uploads.
+**Next:** Speech on Colab (`speech_code.tar` + `speech_data.tar`), then Clock part A, then Motor
+synthetic check. Still uncommitted: all of today's changes.
+
+---
+
+## 2026-10-17 — Eye/Motor logging, bundles rebuilt, commit
+
+**Changed:** `eye.ipynb` and `motor.ipynb` now create a `RunLog` (`/content/out/<m>.log`), wrap their
+result cells in `log.tee(...)`, and download the log (eye: with the ONNX files). `common/runlog.py`
+docstring says session disk, not Drive. All four `colab_upload/<m>_code.tar` rebuilt (runlog change).
+**Checked (local, no ML):** all packages compile; `speech_data.tar` holds 54 cc + 54 cd transcripts and
+wavs, so Speech is ready to run on Colab. Nothing new was run on Colab.
+**Next:** Speech on Colab, then Clock part A, then Motor synthetic check.

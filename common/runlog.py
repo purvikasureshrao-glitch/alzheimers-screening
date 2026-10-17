@@ -1,7 +1,7 @@
 """Append-only run log for Colab / Kaggle sessions.
 
 Colab loses its screen output when it disconnects. `RunLog` writes every message and every
-`tee` block to a text file on Drive (flushed immediately), so after a disconnect the log
+`tee` block to a text file on the session disk (flushed immediately), so after a disconnect the log
 still shows what finished, what its output was, and how long it took.
 """
 import contextlib
