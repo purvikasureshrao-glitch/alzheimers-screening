@@ -530,3 +530,11 @@ Clock outputs the NHATS-provided classification/score (no invented stages). Eye/
 **Measured:** 6% of the reference flagged, but 33% (5/15) of those aged 50+; age confound strong. The app must show
 this as "outside healthy reference range (unvalidated, young reference)", never as an Alzheimer's result.
 **Clock:** user's Colab `tar -x` of `clock_data_lean.tar` failed (exit 2) = truncated upload again; re-upload and check size 1,044,080,640.
+
+---
+
+## 2026-10-17 (clock part A done)
+
+**Ran (Colab):** Clock Part A (H1-H2). Results in FINDINGS 3d. 54,027 indexed, 53,914 kept, 0 SPIDs across splits.
+**Open:** step 3 cleaning grid (H3 name-box removal + rough crop): user reports the crop looks "somewhat cropped" -
+details asked. **Next:** write Part B (Crop-Net) and Part C (ViT) as one run-all notebook with checkpoints.

@@ -406,3 +406,12 @@ adults fall outside a reference made mostly of 20-40 year-olds: the flag would o
 This is the domain shift, measured. It is a descriptive "outside the healthy range" flag, **not** an Alzheimer's
 detector: no AD-labelled data, no accuracy, unvalidated. Small n at older ages (15 aged 50+) makes a
 sensible age-matched range impossible from this dataset.
+
+### 3d. Clock Part A result (run on Colab 2026-10-17, aggregate counts only)
+
+- Images indexed **54,027** (matches Bone et al.). Kept **53,914**; excluded 89 `clock_code_not_a_score` + 24 `no_survey_match`.
+- 10,887 unique SPIDs. Clock score counts (kept): 0: 494, 1: 1,837, 2: 6,089, 3: 11,700, 4: 20,057, 5: 13,737.
+- Dementia = 1: 2,568 of 53,914 (4.8%). Per round 1-11 kept images: 6,918 / 5,504 / 4,459 / 3,671 / 7,076 / 5,997 / 5,256 / 4,658 / 4,186 / 3,098 / 3,091.
+- Split by SPID (seed 0): train 47,614 images / 9,596 SPIDs / 4.8% dementia; val 956 / 202 / 4.4%; test 5,344 / 1,089 / 4.8%;
+  **SPIDs in more than one split: 0.** (Val is 956, not the requested ~1,000, because whole SPIDs are assigned.)
+- Dementia prevalence of 4.8% means balanced accuracy, not accuracy, is the headline (rule 6).
