@@ -1,0 +1,90 @@
+2026-10-17 17:16:26  ---- session start ----
+
+2026-10-17 17:16:26  >>> features
+(20, 35) {1: 10, 0: 10}
+<<< features done in 0.1s
+
+2026-10-17 17:16:26  >>> LOSO
+balanced accuracy 0.300 (95% CI 0.101-0.505), n=20, LOSO, logistic regression, cut-off 0.5
+AUC 0.240 (95% CI 0.000-0.510), n=20, LOSO, logistic regression, cut-off 0.5
+<<< LOSO done in 6.2s
+
+2026-10-17 17:16:32  >>> per task
+antisaccade1 | balanced accuracy 0.300 (95% CI 0.107-0.521), n=20, LOSO, logistic regression, cut-off 0.5
+antisaccade1 | AUC 0.310 (95% CI 0.090-0.593), n=20, LOSO, logistic regression, cut-off 0.5
+visual_attention1 | balanced accuracy 0.450 (95% CI 0.227-0.667), n=20, LOSO, logistic regression, cut-off 0.5
+visual_attention1 | AUC 0.300 (95% CI 0.081-0.582), n=20, LOSO, logistic regression, cut-off 0.5
+visual_search1 | balanced accuracy 0.400 (95% CI 0.192-0.625), n=20, LOSO, logistic regression, cut-off 0.5
+visual_search1 | AUC 0.340 (95% CI 0.101-0.615), n=20, LOSO, logistic regression, cut-off 0.5
+<<< per task done in 16.0s
+
+2026-10-17 17:16:48  >>> detector check
+      subject              task  n_rows  n_valid  dur_s  fs_hz  v_med   v_p99  v_max     pt pt_above_max  n_sac
+ 210823_cfr_f      antisaccade1     124      124    0.4  333.0  9.547  90.964 119.22 102.86        False    1.0
+ 210823_cfr_f visual_attention1      51       51    0.3  167.0  6.599  40.512  65.36  27.84        False    1.0
+ 210823_cfr_f    visual_search1      86       86    0.3  333.0  8.163 429.054 502.22 145.00        False    2.0
+ 210830_gjj_m      antisaccade1     172      172    0.4  500.0  9.179  86.137 212.00 103.14        False    1.0
+ 210830_gjj_m visual_attention1      28       28    0.3  500.0  0.000 174.184 186.68 354.54         True    0.0
+ 210830_gjj_m    visual_search1     116        8    0.3  500.0 74.250 135.763 135.94 385.97         True    0.0
+ 210830_ssw_f      antisaccade1     192      192    0.4  500.0 16.056 335.497 489.32 364.54        False    2.0
+ 210830_ssw_f visual_attention1     100      100    0.3  333.0 24.219 352.617 386.59 275.06        False    2.0
+ 210830_ssw_f    visual_search1     117       39    0.3  333.0  9.159  59.770  69.23  98.62         True    0.0
+ 210913_wsc_m      antisaccade1      21       21    0.4  118.0 23.165 126.400 127.44 259.68         True    0.0
+ 210913_wsc_m visual_attention1     120      120    0.3  500.0 13.110 534.544 798.06 230.88        False    3.0
+ 210913_wsc_m    visual_search1     129      129    0.3  500.0  6.708  78.952 146.88 113.61        False    1.0
+ 220704_yxl_f      antisaccade1     125      123    0.4  333.0 58.291 470.911 688.82 657.22        False    1.0
+ 220704_yxl_f visual_attention1      46       45    0.3  500.0 47.751 293.070 329.62 460.79         True    0.0
+ 220704_yxl_f    visual_search1      91       91    0.3  333.0 44.451 411.856 437.35 557.31         True    0.0
+ 220815_wxy_m      antisaccade1     178      178    0.4  500.0  6.750  34.061  54.92  45.82        False    1.0
+ 220815_wxy_m visual_attention1      95       67    0.3  333.0  8.000 127.880 166.52 115.27        False    1.0
+ 220815_wxy_m    visual_search1     117      117    0.3  333.0 10.438  69.563 107.00  58.17        False    2.0
+ 230410_sgr_f      antisaccade1     171      171    0.4  333.0  5.333  34.914 117.07  45.62        False    1.0
+ 230410_sgr_f visual_attention1      91       91    0.3  333.0  8.082  96.238  98.74 115.96         True    0.0
+ 230410_sgr_f    visual_search1      92       92    0.2  333.0 10.919 131.804 169.28 140.17        False    1.0
+ 230717_yhm_m      antisaccade1     103       17    0.4  286.0 19.654 262.710 280.30 485.02         True    0.0
+ 230717_yhm_m visual_attention1      51       50    0.3  200.0 19.416 176.916 178.31 260.32         True    0.0
+ 230717_yhm_m    visual_search1      83       83    0.3  333.0 21.812 319.038 376.06 349.27        False    1.0
+ 231120_lfr_f      antisaccade1     114        0    0.4    NaN    NaN     NaN    NaN    NaN          NaN    NaN
+ 231120_lfr_f visual_attention1     130      130    0.3 1000.0  8.000 247.668 318.99 209.81        False    2.0
+ 231120_lfr_f    visual_search1     128      128    0.3  500.0  9.387 201.107 337.52 167.77        False    2.0
+ 231127_lfr_f      antisaccade1     174      174    0.4  500.0  8.635  36.311  36.67  63.82         True    0.0
+ 231127_lfr_f visual_attention1      93       93    0.3  333.0 10.455  40.103  43.04  68.28         True    0.0
+ 231127_lfr_f    visual_search1     131      131    0.3  500.0 14.223  50.171  63.06  88.49         True    0.0
+ 220808_zjr_m      antisaccade1     174      174    0.4  500.0  6.276 202.745 524.09 121.92        False    4.0
+ 220808_zjr_m visual_attention1      89       89    0.3  333.0 11.958  40.291  60.09  59.98        False    1.0
+ 220808_zjr_m    visual_search1     113      113    0.3  500.0 10.887  72.144 124.34  84.62        False    1.0
+ 231204_tjr_f      antisaccade1     174      172    0.4  500.0 16.621 308.718 376.24 418.71         True    0.0
+ 231204_tjr_f visual_attention1      91       81    0.3  333.0 17.236  99.057 140.09 178.37         True    0.0
+ 231204_tjr_f    visual_search1     111      111    0.3  333.0 16.576  55.640  81.35  96.67         True    0.0
+  240116_zm_f      antisaccade1     121      116    0.4  333.0 13.924 188.641 246.79 282.32         True    0.0
+  240116_zm_f visual_attention1      51       51    0.3  167.0 18.111 146.640 152.15 254.62         True    0.0
+  240116_zm_f    visual_search1      85       85    0.3  250.0 19.884 189.445 278.79 327.27         True    0.0
+ 240126_mxp_f      antisaccade1     123      123    0.4  333.0 10.491  71.330 116.67 135.65         True    0.0
+ 240126_mxp_f visual_attention1      53       16    0.3  182.0 16.000 178.754 196.53 156.58        False    1.0
+ 240126_mxp_f    visual_search1      85       85    0.3  333.0 13.746 116.727 139.81 189.27         True    0.0
+ 240126_xzl_m      antisaccade1     121      121    0.4  286.0  6.000 206.851 251.03 213.26        False    1.0
+ 240126_xzl_m visual_attention1      52       52    0.3  167.0  3.429  17.936  23.06  17.42        False    1.0
+ 240126_xzl_m    visual_search1      85       85    0.3  333.0  7.000  26.633  30.98  45.98         True    0.0
+ 240521_cxz_f      antisaccade1     178      178    0.4 1000.0 13.500  86.929  94.58 123.05         True    0.0
+ 240521_cxz_f visual_attention1     101       73    0.3  333.0 11.449 207.020 219.76 141.36        False    2.0
+ 240521_cxz_f    visual_search1     121      121    0.3 1000.0 13.634 298.495 337.38 191.12        False    1.0
+   240521_g_m      antisaccade1     185      185    0.4  500.0  4.000  28.575  32.29  45.07         True    0.0
+   240521_g_m visual_attention1      99       99    0.3  333.0 10.464  52.123  56.09  86.24         True    0.0
+   240521_g_m    visual_search1     120      120    0.3  333.0  9.547  38.726  48.00  61.32         True    0.0
+ 240521_ngr_f      antisaccade1     103      103    0.3  500.0 13.880 158.856 243.52 194.17        False    1.0
+ 240521_ngr_f visual_attention1      98       98    0.3  333.0 12.500 156.894 169.06 213.97         True    0.0
+ 240521_ngr_f    visual_search1     122      122    0.3  500.0  7.087 128.581 173.05  91.47        False    2.0
+ 240521_plh_m      antisaccade1     188      188    0.4  500.0  5.154  75.995 212.73  48.07        False    5.0
+ 240521_plh_m visual_attention1     102      102    0.3  333.0  9.000 124.426 124.45 143.93         True    0.0
+ 240521_plh_m    visual_search1     122      122    0.3  500.0  6.884  20.740  62.17  36.31        False    1.0
+240521_wsm2_f      antisaccade1     194      194    0.4  500.0  8.000 118.051 413.00  82.03        False    2.0
+240521_wsm2_f visual_attention1     104      104    0.3  333.0 14.109  55.493  71.64  86.43         True    0.0
+240521_wsm2_f    visual_search1     127      127    0.3  500.0  8.349 105.135 161.31  74.44        False    3.0
+
+recordings: 60 | with threshold above max velocity: 28 | with 0 saccades: 28
+<<< detector check done in 0.1s
+
+2026-10-17 17:16:48  >>> ONNX export
+ONNX == sklearn flags on 20 of 20 | rows with NaN features: 17
+flagged on training subjects: 10 of 20 (training data, not an accuracy)
+<<< ONNX export done in 12.2s

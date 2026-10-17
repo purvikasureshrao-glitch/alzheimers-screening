@@ -491,3 +491,14 @@ Recorded in FINDINGS 9c; PLAN B1 live-use row marked superseded.
 for Disfluency/Acoustic (feature input needs CHAT-style transcripts, so not usable from a mic). No
 patient-facing Speech claim. In the app Speech shows "not validated / research only" (to confirm when the app is built).
 **Next:** Eye export re-run on Colab, then Clock part A, then Motor.
+
+---
+
+## 2026-10-17 (eye saved) — Eye ONNX export done
+
+**Ran (Colab):** `eye.ipynb` re-run; pilot numbers reproduced exactly (LOSO balanced accuracy 0.300, 0.101-0.505,
+n=20; detector check 28/60 recordings with 0 saccades). Export parity: ONNX == sklearn flags on 20/20
+(17 rows with NaN features, handled by the imputer in the ONNX).
+**Saved:** `models/eye_flag.onnx`, `models/eye_features.json`, `results/eye.log`. Trained on all 20 subjects,
+so its flags on them are not an accuracy. Eye stays an inconclusive pilot; webcam transfer unvalidated.
+**Next:** Clock part A on Colab.
