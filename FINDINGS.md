@@ -387,3 +387,22 @@ result is not better (0.556 vs 0.639; CIs overlap, so this is noise-level differ
 **Conclusion:** with Whisper transcripts, the published disfluency approach does not carry over (two model
 sizes, one prompt, one pause threshold). Live Speech via Whisper is **research-only, no patient-facing claim**
 (rules 3 and 7). Not tried: a verbatim-trained ASR.
+
+## 10. Motor — healthy reference from Lima (computed locally 2026-10-17)
+
+`motor/reference.py` on `datasets/Lima.csv` (49,929 taps; 176 subjects, 304 trials; 176 dominant + 128 non-dominant;
+ages 18-74, median 30; decades: 10s 15, 20s 70, 30s 48, 40s 28, 50s 10, 60s 4, 70s 1). Dominant-hand trial, first
+10 s, three features also defined in our keyboard task:
+
+| Feature | Healthy reference cut-off [OURS: 5th / 95th percentile, fixed in advance] |
+|---|---|
+| taps/s | below 3.85 |
+| variance of 1-s counts | above 3.71 |
+| time to first tap | above 1.37 s |
+
+Flag = at least 2 of the 3 outside. Flagged in the reference sample itself: 10/176 (6%). **By age: 5/15 (33%)
+of those aged 50+ and 2/5 aged 60+ are flagged** (median taps/s 5.80 overall vs 4.90 aged 50+). So healthy older
+adults fall outside a reference made mostly of 20-40 year-olds: the flag would over-call in the target age group.
+This is the domain shift, measured. It is a descriptive "outside the healthy range" flag, **not** an Alzheimer's
+detector: no AD-labelled data, no accuracy, unvalidated. Small n at older ages (15 aged 50+) makes a
+sensible age-matched range impossible from this dataset.

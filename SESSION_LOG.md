@@ -520,3 +520,13 @@ Withdrawn as a healthy reference for the Motor features (FINDINGS 2 note). Motor
 matching dataset exists.
 **Decided with user:** four-modality combination = documented rule "2+ of 4 flagged", no accuracy claim.
 Clock outputs the NHATS-provided classification/score (no invented stages). Eye/Speech flag only.
+
+---
+
+## 2026-10-17 (motor reference built)
+
+**Added:** `motor/reference.py` (Lima healthy reference, 3 shared features, cut-offs 5th/95th percentile, flag = 2 of 3),
+`models/motor_reference.json` (git-ignored), FINDINGS section 10. User approved using Lima with the domain shift stated.
+**Measured:** 6% of the reference flagged, but 33% (5/15) of those aged 50+; age confound strong. The app must show
+this as "outside healthy reference range (unvalidated, young reference)", never as an Alzheimer's result.
+**Clock:** user's Colab `tar -x` of `clock_data_lean.tar` failed (exit 2) = truncated upload again; re-upload and check size 1,044,080,640.
