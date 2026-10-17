@@ -547,3 +547,13 @@ details asked. **Next:** write Part B (Crop-Net) and Part C (ViT) as one run-all
 `clock/vit/{model,train}.py`, `clock/pipeline.py`, `preprocess.rough_crop_512`, `notebooks/clock_all.ipynb` (labels > split >
 smoke test > full run > two download zips). Deviations in FINDINGS 3e. `clock_code.tar` rebuilt.
 **First thing on Colab:** the smoke test; any bug in the untested code surfaces there in about 10 min.
+
+---
+
+## 2026-10-18 — Motor on Lima protocol; early Crop-Net download
+
+**Decided (user):** Motor uses the Lima protocol (30 s, one hand) with an age-adjusted healthy reference; no training.
+**Changed:** `motor/reference.py` rewritten (age-adjusted, 30 s); `models/motor_reference.json` rebuilt; FINDINGS 10b; PLAN B4 note.
+Flags in-sample: 2/176 overall, 0/15 aged 50+. Sensitivity unknown.
+**Clock:** `clock_all.ipynb` now splits the full run into part 1 (prep, Crop-Net, crop) > Crop-Net checkpoint download > part 2 (ViT,
+metrics, ONNX). `clock_code.tar` rebuilt. User starting the run; PC must not sleep (Colab disconnects otherwise).

@@ -1,36 +1,37 @@
-"""Healthy reference range from Lima et al. 2024 (smartphone tapping) -> "outside reference" flag [OURS].
+"""Motor: Lima et al. 2024 protocol + age-adjusted healthy reference -> "outside reference" flag [OURS].
 
-NOT the Koppelmans method and NOT validated. No classifier is trained and nothing here comes from an AD
-dataset, so the flag does not say "Alzheimer's"; it says the single-hand tapping is outside a healthy
-reference range. Known domain shift (FINDINGS 2, 2026-10-17): Lima is touchscreen, 30 s, 176 adults aged
-18-74 (median 30, only 15 aged 50+); our task is keyboard shift keys, 10 s, target age ~75. Only features
-computable in both are used. The cut-offs below are conventions fixed in advance, not tuned:
-  tps      (taps/s over the first 10 s)           low  if < 5th percentile
-  tps_var  (variance of ten 1-s counts)           high if > 95th percentile
-  irt      (time to first tap, s)                 high if > 95th percentile
-  flag     = at least 2 of the 3 outside their range
-Dominant-hand trials only (the keyboard task's right index finger is assumed dominant).
+Decision 2026-10-18 (user): the Koppelmans data and protocol are unobtainable, so the Motor test follows Lima et al.:
+one hand, tap as fast as possible on one spot for 30 s, dominant hand (non-dominant optional). No classifier is trained and
+nothing here comes from an AD dataset, so the flag does not say "Alzheimer's": it says the tapping is outside the range of 176
+healthy adults aged 18-74 at the person's age. Not validated; no accuracy.
+
+Features (taps in seconds from the start of the trial, first 30 s):
+  tps      taps per second
+  cv       coefficient of variation of inter-tap intervals (std / mean)
+  fatigue  taps in the last 10 s / taps in the first 10 s
+Age adjustment: each feature is regressed on age (ordinary least squares, Lima dominant-hand trials); the person's age is clamped to
+18-74 (no extrapolation beyond the reference). Cut-offs (conventions fixed in advance, not tuned): residual below the 5th percentile
+for tps and fatigue, above the 95th for cv. Flag = at least 2 of the 3 outside.
+Known limits: touchscreen vs the app's input device, only 15 reference adults aged 50+, target group older than the reference.
 """
 import csv
 import json
 from collections import defaultdict
 
-DURATION, MIN_GAP = 10.0, 1.0
-FEATURES = ("tps", "tps_var", "irt")
+DURATION = 30.0
+AGE_MIN, AGE_MAX = 18, 74
+FEATURES = ("tps", "cv", "fatigue")
 
 
 def trial_features(times_s):
-    """times_s: tap times in seconds from the start of the trial."""
     t = sorted(x for x in times_s if 0 <= x <= DURATION)
-    if not t:
+    iv = [b - a for a, b in zip(t, t[1:])]
+    first, last = sum(x <= 10 for x in t), sum(20 < x <= 30 for x in t)
+    if len(t) < 10 or not first:
         return None
-    counts = [0] * 10
-    for x in t:
-        counts[min(int(x), 9)] += 1
-    m = sum(counts) / 10
-    edges = [0.0] + t + [DURATION]
-    return {"tps": len(t) / DURATION, "tps_var": sum((c - m) ** 2 for c in counts) / 10, "irt": t[0],
-            "gap": any(b - a >= MIN_GAP for a, b in zip(edges, edges[1:]))}
+    m = sum(iv) / len(iv)
+    sd = (sum((d - m) ** 2 for d in iv) / len(iv)) ** 0.5
+    return {"tps": len(t) / DURATION, "cv": sd / m, "fatigue": last / first}
 
 
 def percentile(xs, q):
@@ -38,44 +39,54 @@ def percentile(xs, q):
     return xs[lo] + (xs[hi] - xs[lo]) * (k - lo)
 
 
-def lima_subjects(path):
-    """Return {subject: (age, features)} from the dominant-hand trial, tap times converted ms -> s."""
+def ols(x, y):
+    mx, my = sum(x) / len(x), sum(y) / len(y)
+    b = sum((a - mx) * (c - my) for a, c in zip(x, y)) / sum((a - mx) ** 2 for a in x)
+    return my - b * mx, b
+
+
+def lima_subjects(path, hand="Dominant"):
+    """{subject: (age, features)} from the chosen hand's trial; tap times ms -> s."""
     taps, age = defaultdict(list), {}
     with open(path, encoding="utf-8") as f:
         for r in csv.DictReader(f):
-            if r["Hand"] == "Dominant":
+            if r["Hand"] == hand:
                 taps[r["Code"]].append(float(r["time_of_tap"]) / 1000)
                 age[r["Code"]] = int(r["Age during the test"])
     return {s: (age[s], trial_features(v)) for s, v in taps.items()}
 
 
-def build_reference(path):
-    subj = lima_subjects(path)
-    feats = [f for _, f in subj.values() if f]
-    ref = {"source": "Lima et al. 2024 (Sci Data), dominant-hand trials, first 10 s", "n_subjects": len(feats),
-           "domain_shift": "touchscreen 30 s vs keyboard 10 s; ages 18-74 (median 30) vs target ~75",
-           "tps_low": percentile([f["tps"] for f in feats], 5),
-           "tps_var_high": percentile([f["tps_var"] for f in feats], 95),
-           "irt_high": percentile([f["irt"] for f in feats], 95)}
+def build_reference(path, hand="Dominant"):
+    subj = {s: v for s, v in lima_subjects(path, hand).items() if v[1]}
+    ages = [a for a, _ in subj.values()]
+    ref = {"source": f"Lima et al. 2024 (Sci Data), {hand} hand, 30 s smartphone tapping", "n_subjects": len(subj),
+           "domain_shift": "touchscreen vs app input device; ages 18-74 (median 30), few over 50; target group older",
+           "age_clamp": [AGE_MIN, AGE_MAX]}
+    for name in FEATURES:
+        y = [f[name] for _, f in subj.values()]
+        a0, b = ols(ages, y)
+        res = [v - (a0 + b * a) for v, a in zip(y, ages)]
+        ref[name] = {"intercept": a0, "slope_per_year": b, "res_p5": percentile(res, 5), "res_p95": percentile(res, 95)}
     return ref, subj
 
 
-def outside(f, ref):
-    """Which of the 3 features are outside the healthy range."""
-    return {"tps": f["tps"] < ref["tps_low"], "tps_var": f["tps_var"] > ref["tps_var_high"],
-            "irt": f["irt"] > ref["irt_high"]}
+def outside(f, age, ref):
+    age = min(max(age, AGE_MIN), AGE_MAX)
+    r = {n: f[n] - (ref[n]["intercept"] + ref[n]["slope_per_year"] * age) for n in FEATURES}
+    return {"tps": r["tps"] < ref["tps"]["res_p5"], "cv": r["cv"] > ref["cv"]["res_p95"],
+            "fatigue": r["fatigue"] < ref["fatigue"]["res_p5"]}
 
 
-def flag(f, ref):
-    return sum(outside(f, ref).values()) >= 2
+def flag(f, age, ref):
+    return sum(outside(f, age, ref).values()) >= 2
 
 
 if __name__ == "__main__":
     import sys
     ref, subj = build_reference(sys.argv[1])
     json.dump(ref, open(sys.argv[2], "w"), indent=1)
-    print(json.dumps(ref, indent=1))
-    rows = [(a, f) for a, f in subj.values() if f]
-    for name, sel in [("all", rows), ("age>=50", [r for r in rows if r[0] >= 50]), ("age>=60", [r for r in rows if r[0] >= 60])]:
-        print(f"{name}: n={len(sel)} flagged={sum(flag(f, ref) for _, f in sel)} "
-              f"median tps={sorted(f['tps'] for _, f in sel)[len(sel)//2]:.2f}")
+    print(json.dumps({k: v for k, v in ref.items()}, indent=1))
+    rows = list(subj.values())
+    for name, lo in [("all", 0), ("age>=40", 40), ("age>=50", 50), ("age>=60", 60)]:
+        sel = [(a, f) for a, f in rows if a >= lo]
+        print(f"{name}: n={len(sel)} flagged={sum(flag(f, a, ref) for a, f in sel)}")

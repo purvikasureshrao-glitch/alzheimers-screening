@@ -90,6 +90,8 @@ Source: `Paper/Clock_drawing.pdf` + `Paper/dad270171-sup-0001-suppmat.docx`.
 - Live: patient draws an 11:10 clock on paper → laptop webcam photo → same cleaning/crop → ONNX.
 
 ### B4. Motor — Koppelmans et al. 2023
+
+> **Superseded 2026-10-18:** Koppelmans data/protocol unobtainable. Motor now follows Lima et al. 2024 (30 s, one hand, taps/s, interval CV, fatigue) against an age-adjusted healthy reference; output = "outside healthy range for this age" flag, unvalidated, no accuracy (FINDINGS 10b). The text below is the original Koppelmans design, kept for reference.
 Source: https://pmc.ncbi.nlm.nih.gov/articles/PMC10578230/ ; task code
 github.com/vnckppl/FingerTappingTask.
 

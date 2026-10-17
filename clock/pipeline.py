@@ -191,13 +191,15 @@ def export(cfg, model, cropnet, thr, te, device, log):
               open(f"{out}/clock_features.json", "w"), indent=1)
 
 
-def run(cfg, tab, nhats, log=print):
+def run(cfg, tab, nhats, log=print, stop_after=None):
     device = "cuda"
     assert torch.cuda.is_available(), "turn on a GPU: Runtime > Change runtime type"
     t0 = time.time()
     idx_all = stage_prep(cfg, tab, nhats, log)   # row order = memmap row order; `ok` marks readable images
     cropnet = stage_cropnet(cfg, idx_all, device, log)
     fin = stage_crop(cfg, idx_all, cropnet, device, log)
+    if stop_after == "crop":
+        log("stopped after the crop stage (part 1 done)"); return
     model, va, te = stage_vit(cfg, idx_all, fin, device, log)
     thr, te = evaluate(cfg, model, va, te, device, log)
     export(cfg, model, cropnet, thr, te, device, log)

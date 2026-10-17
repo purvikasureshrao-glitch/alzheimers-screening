@@ -430,3 +430,16 @@ sensible age-matched range impossible from this dataset.
 | Threshold | not stated | chosen on natural validation set (max balanced accuracy) | |
 Task heads: output 0 = clock score / 5 (x5 at use), output 1 = dementia probability; MSE on both. Reported on test: balanced
 accuracy, F1, AUC (95% CI, bootstrap over SPIDs), clock-score MSE. NHATS-only evidence; photo/webcam domain shift unvalidated.
+
+### 10b. Motor: Lima protocol with age-adjusted reference (2026-10-18; supersedes the 10 s keyboard version above)
+
+User decision: Koppelmans data/protocol are unobtainable, so the Motor test follows Lima et al.: one hand, tap as fast as
+possible for 30 s (dominant; non-dominant optional). `motor/reference.py` (rewritten): features taps/s, interval CV, fatigue
+(last 10 s / first 10 s taps); each regressed on age (OLS, 176 dominant-hand trials, age clamped to 18-74); cut-offs = 5th / 95th
+percentile of residuals (conventions, fixed in advance); flag = at least 2 of 3 outside.
+Age trends in the reference: taps/s falls 0.19 per decade (r = -0.28); interval CV rises 0.03 per decade (r = 0.16);
+fatigue ratio rises 0.10 per decade (r = 0.22).
+In-sample flag counts: 2/176 overall, 1/43 aged 40+, 0/15 aged 50+, 0/5 aged 60+. The 10 s keyboard version flagged 33% of the
+50+ group; age adjustment removes that over-calling, but the flag is now conservative and its **sensitivity to impairment is
+unknown** (no patient data; no accuracy). Still: touchscreen vs the app's device, 15 adults aged 50+, extrapolation to ~75 limited
+by clamping to 74. It means "outside the healthy range for this age", not Alzheimer's.
