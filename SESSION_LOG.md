@@ -430,3 +430,15 @@ docstring says session disk, not Drive. All four `colab_upload/<m>_code.tar` reb
 **Checked (local, no ML):** all packages compile; `speech_data.tar` holds 54 cc + 54 cd transcripts and
 wavs, so Speech is ready to run on Colab. Nothing new was run on Colab.
 **Next:** Speech on Colab, then Clock part A, then Motor synthetic check.
+
+---
+
+## 2026-10-17 (later) — Speech ran on Colab
+
+**Ran:** `speech.ipynb` end to end on Colab (uploads worked after disabling a browser privacy/tracking
+shield that blocked them). Results in new FINDINGS section 9: ensemble balanced accuracy 0.759
+(0.675-0.834), Disfluency 0.759, Interventions 0.704, Acoustic 0.583 (CI includes 0.5). n=108, 5-fold CV.
+**Changed:** `FINDINGS.md` (+section 9), `PLAN.md` results table (Speech row filled).
+**Note:** `speech_oof.csv` exists in Colab `/content/out` but the notebook only downloads the log; add it
+to the download cell. Not run yet: domain-shift check for Speech.
+**Next:** Clock part A on Colab, then Motor synthetic check; add oof CSV to speech download cell.

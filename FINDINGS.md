@@ -317,3 +317,22 @@ have n_sac = 0. The cause is the published rule on ~0.3 s recordings, not the st
 start >= max gives the same first step). Timestamps are integer ms with ~3 ms spacing, so
 velocity carries ~±30% quantisation noise. `231120_lfr_f` antisaccade1 has 0 valid samples.
 Decision: no detector change (an invented threshold or tuning on these 20 subjects is not allowed).
+
+## 9. Speech — ADReSS train result (run on Colab 2026-10-17)
+
+Measured, ADReSS train, n=108 (54 cc / 54 cd), 5-fold CV, stratified, seed 0, subject-level bootstrap
+95% CI, threshold 0.5. Shape checks passed (features (108,11), (108,32,3), ComParE (108,6373), no NaN/inf).
+
+| Network | Balanced accuracy (95% CI) | F1 (95% CI) | AUC (95% CI) |
+|---|---|---|---|
+| Disfluency | 0.759 (0.669-0.841) | 0.764 (0.667-0.845) | 0.819 (0.731-0.896) |
+| Acoustic (ComParE) | 0.583 (0.494-0.678) | 0.554 (0.431-0.667) | 0.643 (0.537-0.749) |
+| Interventions | 0.704 (0.613-0.784) | 0.698 (0.586-0.784) | 0.739 (0.638-0.822) |
+| Ensemble (hard vote) | 0.759 (0.675-0.834) | 0.750 (0.645-0.832) | not defined for a vote |
+
+Reading: Disfluency, Interventions and the ensemble have CIs entirely above 0.5. Acoustic's balanced
+accuracy CI includes 0.5 (lower bound 0.494), so no reliable signal from ComParE alone here.
+The ensemble does not beat Disfluency alone. This is cross-validation on one dataset (the ADReSS
+training set, matched for age/gender); no held-out test and no domain-shift check yet (rule 7), so
+nothing here supports a patient-facing claim. Not compared to the paper's figures (different
+evaluation, rule 6). `speech_oof.csv` (out-of-fold predictions) was produced on Colab.

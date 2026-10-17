@@ -179,7 +179,7 @@ MODALITY   TASK                  BAL ACC  F1   AUC  95% CI  PROTOCOL
 Clock      dementia flag           ?      ?     ?    ?-?    SPID-grouped test split
 Motor      CN/aMCI/AD (if data)    -      -     -    -      features only until data
 Eye        AD vs NC                ?      ?     ?    ?-?    LOSO, n=20 (pilot)
-Speech     AD vs control           ?      ?     ?    ?-?    5-fold CV, n=108
+Speech     AD vs control         0.759  0.750  -   0.675-0.834  5-fold CV, n=108 (ensemble; per-network in FINDINGS 9)
 ```
 
 No fifth row, no average. NHATS, ADReSS and ADEM share zero participants, so no combined
