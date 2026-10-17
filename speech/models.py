@@ -76,4 +76,4 @@ class InterventionsNet(nn.Module):
         return 0.
 
 
-MODELS = {"disfluency": DisfluencyNet, "acoustic": AcousticNet, "interventions": InterventionsNet}
+MODELS = {"disfluency": DisfluencyNet, "disfluency_whisper": lambda: DisfluencyNet(5), "acoustic": AcousticNet, "interventions": InterventionsNet}

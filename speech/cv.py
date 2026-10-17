@@ -72,3 +72,15 @@ def cross_validate(feats, y, seed=0, n_folds=5, device="cpu"):
     votes = np.stack([oof[k] >= 0.5 for k in oof]).sum(0)
     oof["ensemble_hard_vote"] = (votes >= 2).astype(float)
     return oof, fold_of
+
+
+def cross_validate_single(name, X, y, seed=0, n_folds=5, device="cpu"):
+    """Same folds, inner split and training as `cross_validate`, for ONE network on features X (no PCA)."""
+    y = np.asarray(y); X = np.asarray(X, np.float32)
+    oof, fold_of = np.zeros(len(y)), np.zeros(len(y), int)
+    for f, (tr, te) in enumerate(StratifiedKFold(n_folds, shuffle=True, random_state=seed).split(y, y)):
+        fold_of[te] = f
+        itr, iva = train_test_split(tr, test_size=0.2, stratify=y[tr], random_state=seed)
+        m = fit_one(name, X[itr], y[itr], X[iva], y[iva], seed + f, device)
+        oof[te] = predict_proba(m, X[te], device)
+    return oof, fold_of
