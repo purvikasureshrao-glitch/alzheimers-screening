@@ -450,3 +450,14 @@ to the download cell. Not run yet: domain-shift check for Speech.
 **Added:** `speech/export.py` (final fit on all 108, ONNX for Disfluency, Acoustic prep = scaler+PCA, Acoustic net, parity checks, `speech_features.json`); `speech.ipynb` sections 6-7 (export + downloads). `speech_code.tar` rebuilt.
 **Not exported:** Interventions (research-only). **Still open for Speech:** Whisper-transcript features validated against human transcripts; domain shift (rule 7).
 **Eye:** export cells exist in `eye.ipynb`, but `models/` is empty, so no Eye ONNX has been saved locally yet.
+
+---
+
+## 2026-10-17 (speech saved) — Speech ONNX export done
+
+**Ran (Colab):** `speech.ipynb` section 6. Parity: scaler+PCA max |ONNX - sklearn| = 1.5e-05;
+Disfluency and Acoustic ONNX flags equal PyTorch on 108/108 (max |dP| 1.8e-07 / 6e-08).
+**Saved:** `models/speech_disfluency.onnx`, `speech_acoustic.onnx`, `speech_acoustic_prep.onnx`,
+`speech_features.json`; `results/speech.log`, `speech_oof.csv` (from `output/speech_results.zip`).
+Trained on all 108; accuracy statement is still only the 5-fold CV (FINDINGS 9).
+**Open for Speech:** Whisper-transcript feature check; domain shift. **Next:** Eye export re-run on Colab, then Clock part A.

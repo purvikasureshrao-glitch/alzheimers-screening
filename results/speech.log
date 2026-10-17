@@ -1,0 +1,43 @@
+2026-10-17 08:07:55  ---- session start ----
+
+2026-10-17 08:07:55  >>> shape check
+disfluency (4, 2) ok
+acoustic (4, 2) ok
+interventions (4, 2) ok
+<<< shape check done in 0.3s
+
+2026-10-17 08:07:56  >>> labels and features
+{0: 54, 1: 54} n = 108
+(108, 11) (108, 32, 3) any NaN/inf: False
+<<< labels and features done in 0.2s
+
+2026-10-17 08:07:56  >>> ComParE
+(108, 6373)
+<<< ComParE done in 459.1s
+
+2026-10-17 08:15:35  >>> 5-fold CV
+<<< 5-fold CV done in 189.2s
+
+2026-10-17 08:18:44  >>> metrics
+disfluency
+   balanced accuracy 0.759 (95% CI 0.669-0.841), n=108, 5-fold CV, n=108, stratified, seed 0
+   F1 0.764 (95% CI 0.667-0.845), n=108, 5-fold CV, n=108, stratified, seed 0
+   AUC 0.819 (95% CI 0.731-0.896), n=108, 5-fold CV, n=108, stratified, seed 0
+acoustic
+   balanced accuracy 0.583 (95% CI 0.494-0.678), n=108, 5-fold CV, n=108, stratified, seed 0
+   F1 0.554 (95% CI 0.431-0.667), n=108, 5-fold CV, n=108, stratified, seed 0
+   AUC 0.643 (95% CI 0.537-0.749), n=108, 5-fold CV, n=108, stratified, seed 0
+interventions
+   balanced accuracy 0.704 (95% CI 0.613-0.784), n=108, 5-fold CV, n=108, stratified, seed 0
+   F1 0.698 (95% CI 0.586-0.784), n=108, 5-fold CV, n=108, stratified, seed 0
+   AUC 0.739 (95% CI 0.638-0.822), n=108, 5-fold CV, n=108, stratified, seed 0
+ensemble_hard_vote
+   balanced accuracy 0.759 (95% CI 0.675-0.834), n=108, 5-fold CV, n=108, stratified, seed 0
+   F1 0.750 (95% CI 0.645-0.832), n=108, 5-fold CV, n=108, stratified, seed 0
+<<< metrics done in 30.3s
+
+2026-10-17 08:19:21  >>> ONNX export
+acoustic prep (scaler+PCA) max |ONNX - sklearn| = 1.53e-05
+disfluency: ONNX flag == PyTorch flag on 108 of 108 | max |dP| = 1.79e-07
+acoustic: ONNX flag == PyTorch flag on 108 of 108 | max |dP| = 5.96e-08
+<<< ONNX export done in 23.9s
