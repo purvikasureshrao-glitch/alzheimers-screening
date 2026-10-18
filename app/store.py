@@ -60,7 +60,8 @@ class Supabase:
     name = "Supabase"
 
     def __init__(self, url, key):
-        self.url, self.key = url.rstrip("/"), key
+        u = urllib.parse.urlparse(url.strip())
+        self.url, self.key = f"{u.scheme}://{u.netloc}", key   # keep only the project address; a pasted /rest/v1/ suffix is ignored
 
     def _call(self, method, table, body=None, query=""):
         req = urllib.request.Request(f"{self.url}/rest/v1/{table}{query}", method=method,
