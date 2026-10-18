@@ -73,6 +73,8 @@ class Supabase:
                 raw = r.read()
         except urllib.error.HTTPError as e:
             raise RuntimeError(f"Supabase {e.code}: {e.read().decode(errors='replace')[:200]}") from None
+        except (urllib.error.URLError, TimeoutError) as e:   # offline, DNS, timeout, or a paused project
+            raise RuntimeError(f"cannot reach Supabase ({e}); check the internet connection and that the project is not paused") from None
         return json.loads(raw) if raw else None
 
     def add_patient(self, row):

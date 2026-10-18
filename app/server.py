@@ -123,6 +123,8 @@ class H(BaseHTTPRequestHandler):
             self._send(400, {"error": f"bad request: {e}"})
         except RuntimeError as e:   # storage failure (e.g. Supabase rejected the request)
             self._send(502, {"error": str(e)})
+        except Exception as e:      # never drop the connection: the page would only say "Failed to fetch"
+            self._send(500, {"error": f"{type(e).__name__}: {e}"})
 
     def log_message(self, *a):   # no request log: nothing about the person is written anywhere
         pass
