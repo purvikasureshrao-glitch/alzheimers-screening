@@ -116,6 +116,7 @@
           <div><label for="q-dep">Depression or low mood?</label><select id="q-dep"><option value="">Select…</option><option>No</option><option>Yes</option></select></div>
           <div><label for="q-act">Physical activity</label><select id="q-act"><option value="">Select…</option><option>Rarely</option><option>1–2 days a week</option><option>3 or more days a week</option></select></div>
         </div>
+        <p class="small" id="q-msg" role="alert" style="color:var(--flag)"></p>
         <div class="row"><span class="spacer"></span><button type="submit" id="q-submit">Continue</button></div>
       </form>
     </div>
@@ -199,7 +200,15 @@ const pretty = v => Array.isArray(v) ? (v.join(", ") || "none") : (v && typeof v
 
 /* ---------- views ---------- */
 function show(view) { ["landing", "patient", "doctor"].forEach(v => { $("view-" + v).hidden = v !== view; }); window.scrollTo(0, 0); }
-$("brand").onclick = () => { if (!$("view-patient").hidden && patient.code && !confirm("Leave? Unsaved results will be lost.")) return; location.reload(); };
+$("brand").onclick = () => {
+  if ($("view-patient").hidden || !patient.code || !$("step-final").hidden) return location.reload();   // nothing unsaved to lose
+  if ($("leave")) return;   // in-page confirmation (browser confirm() popups can be blocked)
+  const bar = el("div", "note"); bar.id = "leave"; bar.setAttribute("role", "alert");
+  const stay = el("button", "secondary", "Stay"), go = el("button", "", "Leave and lose results");
+  stay.onclick = () => bar.remove(); go.onclick = () => location.reload();
+  const row = el("div", "row"); row.append(stay, go); bar.append(el("p", "", "Leave now? The tests you have not finished will be lost."), row);
+  $("banner").before(bar);
+};
 $("brand").onkeydown = e => { if (e.key === "Enter") $("brand").onclick(); };
 $("go-patient").onclick = () => { show("patient"); setStep("details"); };
 $("go-doctor").onclick = () => show("doctor");
@@ -240,7 +249,7 @@ $("eye-skip").onclick = () => setStep("speech"); $("speech-skip").onclick = () =
 
 /* ---------- questionnaire ---------- */
 $("q-form").onsubmit = async e => {
-  e.preventDefault(); const btn = $("q-submit"); btn.disabled = true;
+  e.preventDefault(); const btn = $("q-submit"); btn.disabled = true; $("q-msg").textContent = "";
   const v = id => $(id).value.trim(); const q = {};
   [["age", "q-age"], ["gender", "q-gender"], ["ethnicity", "q-eth"], ["education", "q-edu"], ["systolic_bp", "q-sys"], ["diastolic_bp", "q-dia"], ["diabetes", "q-diab"],
    ["high_blood_pressure", "q-htn"], ["high_cholesterol", "q-chol"], ["family_history_dementia", "q-fam"], ["smoking", "q-smoke"], ["head_injury", "q-head"],
@@ -248,7 +257,7 @@ $("q-form").onsubmit = async e => {
   try {
     const { code } = await post("/api/patient", { name: v("q-name"), questionnaire: q });
     Object.assign(patient, { code, name: v("q-name"), age: Number(v("q-age")), q }); setStep("clock");
-  } catch (err) { alert("Could not save your details: " + err.message); }
+  } catch (err) { $("q-msg").textContent = "Could not save your details: " + (err.message === "Failed to fetch" ? "the app is not running. Start run_app.bat and keep its window open." : err.message); }
   btn.disabled = false;
 };
 
@@ -343,7 +352,7 @@ async function finish() {
   if (data) {
     body.append(el("div", "overall" + (data.combined.follow_up ? " follow" : ""), data.combined.text));
     const wrap = el("div", "sumpara"); ORDER.forEach(m => wrap.append(el("h3", "", NAMES[m]), el("p", "", data.summary.modalities[m]))); body.append(wrap);
-    body.append(el("p", "muted small", "This is a screening aid, not a diagnosis. " + (data.summary.source === "template" ? "Summary written from a fixed template." : "Summary written by a local language model and checked against the results.")));
+    body.append(el("p", "muted small", "This is a screening aid, not a diagnosis. " + (data.summary.source === "template" ? "Summary written from a fixed template" + (data.summary.note ? " (" + data.summary.note + ")." : ".") : "Summary written by a local language model and checked against the results.")));
   }
   const row = el("div", "row"), pr = el("button", "secondary", "Print"), again = el("button", "", "Finish"); pr.onclick = () => window.print(); again.onclick = () => location.reload(); row.append(pr, el("span", "spacer"), again); body.append(row);
 }

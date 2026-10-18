@@ -673,3 +673,13 @@ real hardware), speech 60 s (microphone - never run; Whisper small is cached), t
 **Changed:** `app/store.py` (Supabase REST via server-side service key in `.env`, else `data/local_store.json`; doctor login from `.env`), routes `/api/patient`, `/api/save`, `/api/doctor/{login,search,record}` in `server.py`, `index.html` rewritten (landing, stepper, questionnaire, canvas clock, doctor view), `supabase/schema.sql` + `SETUP.md` (RLS on, no public policies), `.gitignore` (.env, data/, NHATS per-image CSVs), `tests/test_store.py` (3), `test_app.py` updated. App tests pass (34).
 **Rules kept:** questionnaire answers are stored and shown only; they never change a result (no fusion). Summary wording still "follow-up recommended", no diagnosis. Eye/speech still not counted.
 **Open:** (1) mouse-drawn clock is a different input from the NHATS photos the model was trained on: unvalidated, domain shift (rule 7). (2) Cookie Theft image file not in repo: user must add `app/static/cookie_theft.jpg` and confirm they may display it. (3) Supabase project + `.env` not yet created. (4) Page never viewed in a browser by me (Chrome extension not connected); webcam/mic untested. (5) EVIDENCE/CAVEAT text for clock should mention mouse input.
+
+---
+
+## 2026-10-19 — Supabase live, full browser self-check
+
+**Done:** Supabase connected (`.env`, user-made; I never read the key; `app/store_check.py` prints no secrets). Fixed: pasted URL with `/rest/v1/` suffix; network/Supabase errors now return a readable JSON error instead of dropping the connection ("Failed to fetch"); `confirm()`/`alert()` replaced by in-page messages (Brave can block popups); `run_app.bat` starts Ollama and waits before opening the browser; Cookie Theft picture (Heyselaar 2021, CC BY-NC, from OSF 459y2, redrawn version, NOT the ADReSS original) added at `app/static/cookie_theft.png` (git-ignored) with credit line; clock caveat now mentions mouse drawings.
+**Self-test in Brave (extension):** landing, questionnaire, real mouse drawing on the clock canvas -> model, 30 s motor (simulated taps), speech picture, final summary + save, record read back from Supabase, doctor wrong-password rejected, brand-click leave prompt. No console errors. Summary uses the fixed template unless all four screens are done (by design).
+**Not tested:** eye test on a webcam, speech on a microphone, doctor login with the real password (not read), anything on a second device.
+**Test records left in Supabase (delete in Table Editor):** Storage Check, Net Test, Test Patient, Auto Test patients.
+**Next (user, 2026-10-20):** run the full flow incl. webcam and microphone; regenerate the Supabase key afterwards.
