@@ -257,7 +257,7 @@ $("q-form").onsubmit = async e => {
   const wipe = () => { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height); ctx.lineWidth = 5; ctx.lineCap = ctx.lineJoin = "round"; ctx.strokeStyle = "#000"; inked = false; };
   wipe();
   const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
-  cv.onpointerdown = e => { drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(last[0] + .1, last[1]); ctx.stroke(); inked = true; };
+  cv.onpointerdown = e => { drawing = true; last = pos(e); try { cv.setPointerCapture(e.pointerId); } catch {} ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(last[0] + .1, last[1]); ctx.stroke(); inked = true; };
   cv.onpointermove = e => { if (!drawing) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p; };
   cv.onpointerup = cv.onpointercancel = () => { drawing = false; };
   $("clock-clear").onclick = wipe;
