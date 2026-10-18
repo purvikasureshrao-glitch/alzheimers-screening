@@ -1,12 +1,11 @@
 """ONNX runners for the modalities that need a model. Not wired into the server yet.
 
-Status (2026-10-18):
+Status (2026-10-18; clock moved to app/clock.py):
   eye     models/eye_flag.onnx + eye_features.json exist. Missing: gaze capture (MediaPipe/WebGazer) and `eye.features` from live
           gaze; the pilot is inconclusive and webcam transfer is unvalidated.
-  speech  models/speech_*.onnx exist but need CHAT-style transcripts; a Whisper transcript cannot feed them (FINDINGS 9b-9c).
-          Live speech stays 'not run (research only)'.
-  clock   waits for the Colab run: clock_vit.onnx + clock_cropnet.onnx + clock_features.json (threshold). Missing: photo cleaning
-          path, which must reproduce clock.preprocess at 1/4 scale and the 3-step crop with the Crop-Net ONNX.
+  speech  DONE as EXPERIMENTAL: see app/speech.py (Whisper small + models/speech_whisper.onnx, FINDINGS 9d). The older
+          speech_disfluency/acoustic ONNX files need CHAT transcripts and stay unused.
+  clock   DONE: see app/clock.py (photo cleaning + 3-step Crop-Net ONNX crop + ViT ONNX), served at /api/clock.
 """
 
 

@@ -2,14 +2,14 @@
 heat mass (+20 px) -> window holding 96% of pixel mass (+8 px) -> pad square -> 512. The margins are the paper's 80 / 30 px
 divided by 4 because images are area-averaged 4x on load (preprocess.PRE_REDUCE)."""
 import numpy as np
-import torch
-import torch.nn.functional as F
 from PIL import Image
 
 from . import preprocess
 
 
 def _heat(model, imgs, device, bs=32):
+    import torch   # lazy: the laptop app imports `_crop_one` without torch
+    import torch.nn.functional as F
     out = []
     with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16):
         for i in range(0, len(imgs), bs):

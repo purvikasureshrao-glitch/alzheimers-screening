@@ -324,6 +324,25 @@ start >= max gives the same first step). Timestamps are integer ms with ~3 ms sp
 velocity carries ~±30% quantisation noise. `231120_lfr_f` antisaccade1 has 0 valid samples.
 Decision: no detector change (an invented threshold or tuning on these 20 subjects is not allowed).
 
+### 8c. Eye: webcam deployment, literature check and what the app does (2026-10-18)
+
+Web search (summaries only; **papers not opened, figures unverified, re-read before citing**): a Utrecht thesis comparing webcam and
+dedicated trackers (webcam weaker on precision and sampling rate; large horizontal saccades detectable, short/vertical limited);
+a 2025 n=7 comparison of a MediaPipe webcam tracker against a Tobii (saccade amplitude overestimated by about 1.0 deg +/- 2.15);
+a bachelor's thesis reporting webcam accuracy about 3.65 deg and session drift; a 2025 systematic review of 71 studies in which antisaccade
+tasks separate AD/MCI from controls, with lab-grade trackers; the closest webcam MCI work uses a different task (Visual Paired Comparison,
+arXiv 2408.05369). **No webcam validation of antisaccade-based AD screening was found.**
+
+Mismatch between the trained model and a webcam (measured/derived here, not from the web):
+- Training: ~333 Hz, ~0.3 s per task, unknown screen units (px). Webcam ~30 Hz gives about 9 samples per 0.3 s task.
+- `disconj_x/y` need separate left/right gaze: the webcam path leaves them **missing**, not 0 (6 of 30 features).
+- Saccade features (amplitude, velocity, first-saccade time, count) are mostly undefined at 9 samples; the model's imputer fills them.
+- Amplitude/velocity/spread are in browser-screen pixels, not the research tracker's units: **not comparable**.
+- Stimuli are ours: the dataset's stimuli are unpublished (FINDINGS 6).
+Decision (user, 2026-10-18): build webcam capture anyway (option 2). Safeguards: result labelled EXPERIMENTAL, **excluded from the 2-of-4 rule**
+(`Result.counts = False`), shown with number of features actually measured, `not_run` if any task has fewer than 4 valid samples.
+Capture code (`app/static/eye.js`) is **untested on a real webcam** (no camera in the test environment); only the Python path is tested.
+
 ## 9. Speech — ADReSS train result (run on Colab 2026-10-17)
 
 Measured, ADReSS train, n=108 (54 cc / 54 cd), 5-fold CV, stratified, seed 0, subject-level bootstrap
@@ -388,6 +407,19 @@ result is not better (0.556 vs 0.639; CIs overlap, so this is noise-level differ
 sizes, one prompt, one pause threshold). Live Speech via Whisper is **research-only, no patient-facing claim**
 (rules 3 and 7). Not tried: a verbatim-trained ASR.
 
+### 9d. Speech: experimental live path (2026-10-18; supersedes "research-only" in 9b/9c for display, not for claims)
+
+Decision (user, 2026-10-18): build the live speech test as EXPERIMENTAL, same treatment as webcam eye. The model is the 5-feature Disfluency network
+on Whisper-recoverable features (fillers, mm-hmm, repetition, pause, word rate), fitted on all 108 ADReSS subjects from the saved Whisper `small`
+feature table (no audio needed). **Only evidence: 5-fold CV 0.639 (0.546-0.731), n=108 (9b).** The final model is not evaluated on anything.
+Not validated, all differences from the CV setting:
+- ASR build: faster-whisper `small` int8 on CPU (CTranslate2) instead of openai-whisper `small`; same prompt, language and word timestamps.
+- Task: ADReSS is the Cookie Theft picture description. The app asks for a spoken description of a family kitchen (the picture has rights questions); different content and fixed ~60 s length.
+- Channel: laptop microphone instead of ADReSS enhanced audio; interviewer speech is absent live but present in the ADReSS recordings.
+- `word_rate` uses the live recording duration; in training it used the file length including the interviewer.
+- Data-quality gate [OURS]: fewer than 20 words heard -> "not run". Not a clinical threshold.
+Result is shown but **not counted in the 2-of-4 rule** (`counts=False`). `models/speech_whisper.onnx` comes from Colab (`notebooks/speech_live_export.ipynb`).
+
 ## 10. Motor — healthy reference from Lima (computed locally 2026-10-17)
 
 `motor/reference.py` on `datasets/Lima.csv` (49,929 taps; 176 subjects, 304 trials; 176 dominant + 128 non-dominant;
@@ -416,7 +448,7 @@ sensible age-matched range impossible from this dataset.
   **SPIDs in more than one split: 0.** (Val is 956, not the requested ~1,000, because whole SPIDs are assigned.)
 - Dementia prevalence of 4.8% means balanced accuracy, not accuracy, is the headline (rule 6).
 
-### 3e. Clock build: deviations from Bone et al. (code written 2026-10-17, not yet run)
+### 3e. Clock build: deviations from Bone et al. (code written 2026-10-17; run on Colab 2026-10-17/18, results in 3f)
 
 | Item | Paper | Ours [OURS] | Why |
 |---|---|---|---|
@@ -430,6 +462,24 @@ sensible age-matched range impossible from this dataset.
 | Threshold | not stated | chosen on natural validation set (max balanced accuracy) | |
 Task heads: output 0 = clock score / 5 (x5 at use), output 1 = dementia probability; MSE on both. Reported on test: balanced
 accuracy, F1, AUC (95% CI, bootstrap over SPIDs), clock-score MSE. NHATS-only evidence; photo/webcam domain shift unvalidated.
+
+### 3f. Clock full run result (Colab 2026-10-17/18; `results/clock.log`)
+
+- Test split: **1,089 people (5,344 images)**, SPID-grouped, threshold 0.060 chosen on the validation set (956 images).
+  **Balanced accuracy 0.654 (95% CI 0.605-0.707); F1 0.157 (0.124-0.191); AUC 0.707 (0.631-0.780)**; CIs bootstrap over SPIDs.
+  Clock-score MSE 0.673 (0-5 scale), mean absolute error 0.636.
+- Test prevalence 4.8% but **32.8% flagged**: the model over-flags (many false alarms); F1 is low for that reason.
+- Training: ViT head best val MSE 0.06556, full fine-tune 0.06225 (early stopped after 6 of 12 epochs). Not compared with Bone et al.'s
+  figures: different backbone, resolution and split (rule 6).
+- **Crop-Net did not learn.** Synthetic validation MSE stayed at 0.16222 from step 100 to early stop at step 4000; after cropping,
+  ink touches the border in 90.2% of crops (median ink fraction 2.8%, 1.6% below 0.5%). The 3-step crop therefore does little beyond
+  the rough crop. The ViT was trained on these crops, so the app uses the same Crop-Net unchanged (decision with user 2026-10-18,
+  option "keep and flag"). No crop rejection (H6) was applied.
+- ONNX parity with PyTorch on Colab: ViT max diff 2.98e-07 (same flag on 16/16), Crop-Net 9.39e-08.
+- Files: `models/clock_vit.onnx` (355 MB), `models/clock_cropnet.onnx`, `models/clock_features.json` (threshold 0.060).
+- **App path (`app/clock.py`)**: photo resized to a 828 px long side (= 4x-reduced NHATS scale), then the same `clock.preprocess` /
+  `clock.crop` code and the two ONNX models. Local test uses a synthetic drawing only (shapes and ranges); there is **no real
+  photo and no accuracy for the photo path**. Heat map upsampling uses OpenCV bilinear instead of torch (not compared numerically).
 
 ### 10b. Motor: Lima protocol with age-adjusted reference (2026-10-18; supersedes the 10 s keyboard version above)
 

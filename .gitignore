@@ -5,6 +5,9 @@ Paper/
 # Trained model artifacts — come from Colab/Kaggle, not git
 models/
 
+# Vendored MediaPipe (13 MB, re-downloadable: see SESSION_LOG 2026-10-18 eye)
+app/static/vendor/
+
 # Python
 .venv/
 venv/

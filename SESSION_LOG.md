@@ -573,3 +573,81 @@ called unless all four screens ran), `server.py` (local HTTP on 127.0.0.1:8765, 
 (`python motor/reference.py datasets/Lima.csv models/motor_reference.json`).
 **Not built:** eye capture (MediaPipe/WebGazer) + ONNX call, clock photo cleaning + ONNX call (waits for Colab), live speech (research only),
 ONNX runtime install, "see what was captured" views, Ollama model not installed/tested.
+
+---
+
+## 2026-10-18 (clock complete)
+
+**Discussed:** user slept through the Colab run; the saved zips show it finished (part 1 and part 2). No rerun needed.
+**Decided (user):** keep the Crop-Net as trained and flag it as a limitation (option a); no retrain.
+**Result:** test n=1089 people: balanced accuracy 0.654 (0.605-0.707), AUC 0.707, F1 0.157; flags 32.8% vs 4.8% prevalence.
+Crop-Net validation error never moved (0.16222) and 90% of crops touch the border. Recorded in FINDINGS 3f; PLAN results table filled.
+**Changed:** extracted `models/clock_{vit,cropnet}.onnx` + `clock_features.json` and `results/clock*.csv/log`; `clock/crop.py` torch import made lazy;
+new `app/clock.py` (photo -> cleaning -> 3-step ONNX crop -> ViT -> flag at 0.060), `/api/clock` route, upload control on the clock card,
+clock evidence/caveat text in `app/evidence.py`, 4 new tests (18 pass with Python 3.13: `PYTHONPATH=. python tests/test_app.py`).
+Local deps installed into Python 3.13: onnxruntime, numpy, scipy, pillow, opencv-python-headless (inference only).
+**Open / next:** photo path unvalidated (no real photos; only a synthetic drawing was tested); heat-map upsampling differs from torch (not compared);
+eye capture, live speech, Ollama still not built. Commit not made yet.
+
+---
+
+## 2026-10-18 (eye webcam path, experimental)
+
+**Discussed:** the eye model needs a ~333 Hz research tracker; a webcam gives ~9 samples per 0.3 s task. User chose option 2 (build webcam capture anyway)
+and asked for a document stating the limit and that the result is flagged as such. Web search for literature: FINDINGS 8c (summaries only, papers not opened).
+**Decided:** eye result is shown as EXPERIMENTAL and **not counted** in the 2-of-4 rule (my recommendation, user said "go ahead with plan 2"); left/right-eye
+features left missing, not faked; `not_run` if a task has fewer than 4 valid samples.
+**Changed:** `app/eye.py` (gaze -> `eye.features.extract` -> `eye_flag.onnx`), `app/static/eye.js` (MediaPipe iris + 9-point calibration + 3 tasks, 300 ms each),
+eye card in `index.html`, `/api/eye` and `/static/` file serving in `server.py` (traversal blocked), `Result.counts`, `combine` (excluded list + wording),
+eye caveat in `evidence.py`, FINDINGS 8c, PLAN eye row, 6 new tests (24 pass, Python 3.13).
+**Vendored (git-ignored, 13 MB):** `app/static/vendor/` = `@mediapipe/tasks-vision@0.10.14` (`vision_bundle.mjs`, `wasm/vision_wasm_internal.{js,wasm}` from
+cdn.jsdelivr.net) + `face_landmarker.task` (storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/). Redownload if missing.
+**Open:** `eye.js` never run on a real webcam (try it: start the server, click "Start the eye test"); calibration error is shown but not used as a gate;
+stimuli are ours; eye accuracy remains inconclusive (CI 0.101-0.505) and webcam accuracy unknown.
+
+---
+
+## 2026-10-18 (speech live path, experimental)
+
+**Decided (user):** Plan A: live speech as EXPERIMENTAL, not counted in the 2-of-4 rule. Task is a spoken kitchen-scene description (Cookie Theft picture has rights questions).
+**Changed:** `speech/export.py` `export_whisper()`; `notebooks/speech_live_export.ipynb` (Colab, CPU, features + labels only, no audio); `colab_upload/speech_code.tar` rebuilt
+and `colab_upload/speech_whisper_{features,oof}.csv` copied in; `app/speech.py` (faster-whisper small int8 -> 5 features -> `models/speech_whisper.onnx`);
+`/api/speech`; 60 s recording UI on the speech card; speech evidence/caveat text; FINDINGS 9d; 4 new tests (28 run, 1 skipped until the ONNX exists).
+Installed `faster-whisper` into Python 3.13; Whisper `small` (~460 MB) is now cached by the first test run.
+**NEXT (user, Colab):** open `notebooks/speech_live_export.ipynb`, upload `speech_code.tar`, `speech_whisper_features.csv`, `speech_whisper_oof.csv` from `colab_upload/`,
+run all, send back the 2 printed lines, save `speech_whisper.onnx` + `speech_whisper_features.json` into `D:\Alzheimers\models\`.
+**Open:** browser recording and end-to-end Whisper path never run on a real microphone; speech remains unvalidated beyond the 108-person CV.
+
+---
+
+## 2026-10-18 (speech model exported)
+
+**Ran (Colab):** `speech_live_export.ipynb`: features (108, 5), classes 54/54, all finite; ONNX flag == PyTorch flag on 108/108, max |dP| 1.19e-07.
+**Saved:** `models/speech_whisper.onnx` + `speech_whisper_features.json` (from `output/speech_live_results.zip`). All 28 app tests pass (none skipped).
+Trained on all 108 subjects, so its flags on them are not an accuracy; the only accuracy is the CV 0.639 (0.546-0.731).
+**Next:** Ollama summary + end-to-end run of the app on a real webcam/microphone.
+
+---
+
+## 2026-10-18 (Ollama set up, summary tested)
+
+**Installed:** Ollama 0.40.6 (official signed installer, `%LOCALAPPDATA%\Programs\Ollama`), model `llama3.1:8b` (4.9 GB). Machine: 15.6 GB RAM, no discrete GPU, so CPU only.
+**Tested (synthetic results, no patient data):** first run took 84 s and the model returned nested objects without `overall`; the validator rejected it and the
+fixed template was used (the safe fallback worked). **Fix:** `app/summary.py` now passes a JSON schema as Ollama `format` (shape enforced) and always sets
+`overall` to the fixed rule text (it carries the "no accuracy claim" line). Re-run: accepted by the validator, 38 s. 29 tests pass.
+**Note:** the model's paragraphs shorten the evidence (it dropped the CIs and n in its wording). The validator only checks banned wording and invented numbers,
+not omissions; the card for each modality still shows its full evidence. Wall time 40-90 s on CPU, so the UI must say "Writing...".
+**Next:** real webcam/microphone test; commit.
+
+---
+
+## 2026-10-18 (ONNX check + frontend finished)
+
+**ONNX:** every model the app needs exists: `clock_vit`, `clock_cropnet`, `eye_flag`, `speech_whisper` (+ their json). Motor needs none (reference table).
+`speech_disfluency/acoustic(_prep).onnx` stay unused (need CHAT transcripts). New `GET /api/status` reports missing model files, Ollama state and the vendored MediaPipe files.
+**Frontend rewritten (`app/static/index.html`):** status banner, "n of 4 done" strip, numbered cards in order Clock > Motor > Eye > Speech, "Experimental - not counted" tags,
+clock shows the cropped image the model saw, speech shows the transcript (page only, not stored), eye result shows calibration error, summary shows a running timer,
+Copy / Print / Start over buttons, print stylesheet, dark mode, aria-live messages, permission-denied messages.
+**Also:** `run_app.bat` (Python 3.13, opens the browser), `requirements-local.txt` updated, `clock.analyse`, `speech.analyse`, `eye.score(calibration_pct)`.
+**Tested:** 31 tests pass; page and eye.js JavaScript syntax-checked with node. **Not tested:** the page in a real browser (Chrome extension not connected), webcam, microphone.
+**Next:** device test together; commit.

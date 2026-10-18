@@ -55,3 +55,33 @@ def export(disfluency, acoustic_raw, y, out_dir, seed=0, device="cpu"):
                "status": "trained on all 108 ADReSS train subjects; accuracy only from 5-fold CV (FINDINGS 9); acoustic CI includes 0.5; "
                          "Whisper-transcript features and domain shift unvalidated"},
               open(out / "speech_features.json", "w"), indent=1)
+
+
+def export_whisper(features, y, out_dir, seed=0, device="cpu"):
+    """Live-app network: Disfluency architecture on the 5 Whisper-recoverable features (FINDINGS 9b), fitted on all 108 subjects.
+
+    NOT an evaluation: only the 5-fold CV in `cv.cross_validate_single` supports an accuracy statement (0.639, 0.546-0.731 for Whisper small).
+    Needs only the feature table and labels (no audio, no transcripts).
+    """
+    import onnxruntime as ort
+
+    out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
+    y = np.asarray(y); X = np.asarray(features, np.float32)
+    itr, iva = train_test_split(np.arange(len(y)), test_size=0.2, stratify=y, random_state=seed)
+    net = fit_one("disfluency_whisper", X[itr], y[itr], X[iva], y[iva], seed, device).cpu().eval()
+    path = out / "speech_whisper.onnx"
+    torch.onnx.export(net, torch.zeros(1, X.shape[1]), str(path), input_names=["x"], output_names=["logits"],
+                      dynamic_axes={"x": {0: "n"}}, opset_version=15, dynamo=False)
+    logits = ort.InferenceSession(str(path)).run(None, {"x": X})[0]
+    p_onnx = torch.softmax(torch.tensor(logits), -1)[:, 1].numpy()
+    p_torch = predict_proba(net, X)
+    print(f"disfluency_whisper: ONNX flag == PyTorch flag on {int(((p_onnx >= .5) == (p_torch >= .5)).sum())} of {len(X)} "
+          f"| max |dP| = {np.abs(p_onnx - p_torch).max():.2e}")
+    json.dump({"input": "5 features in this order, from speech.whisper_features.features_from_words",
+               "feature_order": ["fillers", "mhm_hm", "repetition", "pause", "word_rate"],
+               "whisper": "openai-whisper small, language en, word timestamps, condition_on_previous_text False, "
+                          "initial_prompt 'Um, uh, so, er, I think, I think the, the mm-hmm.'",
+               "output": "logits [not AD-like, AD-like]; softmax, P(AD-like) >= 0.5 flags",
+               "status": "trained on all 108 ADReSS train subjects; accuracy only from 5-fold CV (FINDINGS 9b: 0.639, 0.546-0.731); "
+                         "app uses faster-whisper small, not openai-whisper (unvalidated); task and microphone shift unvalidated"},
+              open(out / "speech_whisper_features.json", "w"), indent=1)

@@ -5,36 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Memory Screening</title>
 <style>
-  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2230; --muted:#5b6475; --line:#dde1e8; --accent:#2457d6; --flag:#b4540a; --ok:#1f7a4d; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --card:#1b2030; --ink:#e8ebf2; --muted:#a2abbd; --line:#2c3347; --accent:#7ea2ff; --flag:#f0a15c; --ok:#6fcf9b; } }
+  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2230; --muted:#5b6475; --line:#dde1e8; --accent:#2457d6; --flag:#b4540a; --ok:#1f7a4d; --warn-bg:#fff4e0; --warn-line:#e0b060; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --card:#1b2030; --ink:#e8ebf2; --muted:#a2abbd; --line:#2c3347; --accent:#7ea2ff; --flag:#f0a15c; --ok:#6fcf9b; --warn-bg:#2e2616; --warn-line:#8a6a2c; } }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.5rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin: 0 0 4px; }
+  main { max-width: 780px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin: 0; }
   p { margin: 6px 0; } .muted { color: var(--muted); font-size: .92rem; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin:14px 0; }
+  .head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px; }
+  .num { width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:inline-grid; place-items:center; font-size:.85rem; }
   .tag { display:inline-block; font-size:.8rem; padding:2px 8px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
   .tag.flagged { color:var(--flag); border-color:var(--flag); } .tag.not_flagged { color:var(--ok); border-color:var(--ok); }
+  .tag.exp { border-style:dashed; }
   button { font:inherit; padding:10px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
   button.secondary { background:transparent; color:var(--accent); } button:disabled { opacity:.5; cursor:default; }
+  button:focus-visible, input:focus-visible, summary:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
   #tap { width:100%; height:140px; font-size:1.3rem; margin-top:10px; }
   input[type=number] { font:inherit; width:6rem; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
-  dl { display:grid; grid-template-columns: auto 1fr; gap:2px 12px; margin:8px 0; } dt { color:var(--muted); }
+  dl { display:grid; grid-template-columns: auto 1fr; gap:2px 12px; margin:8px 0; } dt { color:var(--muted); } dd { margin:0; }
   .caveat { border-left:3px solid var(--line); padding-left:10px; margin-top:8px; }
+  .banner { background:var(--warn-bg); border:1px solid var(--warn-line); border-radius:10px; padding:10px 14px; margin:12px 0; font-size:.92rem; }
+  .progress { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; } .progress span { font-size:.85rem; }
   #timer { font-size:2rem; font-variant-numeric: tabular-nums; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:8px 0; }
+  img.preview { width:160px; height:160px; object-fit:contain; background:#000; border-radius:8px; border:1px solid var(--line); }
+  details { margin-top:8px; } summary { cursor:pointer; color:var(--muted); font-size:.92rem; }
+  .transcript { white-space:pre-wrap; background:var(--bg); border-radius:8px; padding:8px 10px; font-size:.92rem; }
+  .overall-text { white-space:pre-wrap; } .sumpara h3 { font-size:1rem; margin:12px 0 2px; }
+  @media print { button, input, .banner, .progress, .extra { display:none !important; } body { background:#fff; color:#000; } .card { break-inside:avoid; } }
 </style>
 </head>
 <body>
 <main>
   <h1>Memory screening</h1>
-  <p class="muted">Four short, independent screens. This is a screening aid, not a diagnosis. Everything stays on this computer; nothing is uploaded and no name is stored.</p>
+  <p class="muted">Four short, independent screens. This is a screening aid, not a diagnosis. Everything stays on this computer; nothing is uploaded and no name is stored. Results disappear when this page is closed.</p>
+  <div id="banner"></div>
+  <div class="progress" id="progress" aria-live="polite"></div>
 
   <div id="cards"></div>
 
   <section class="card" id="overall-card">
-    <h2>Overall</h2>
-    <p class="muted">The only combination is a stated rule: 2 or more flagged screens recommend clinical follow-up. It has no accuracy figure.</p>
-    <button id="sum-btn">Write the summary</button>
+    <div class="head"><h2>Overall</h2></div>
+    <p class="muted">The only combination is a stated rule: 2 or more counted screens flagged recommends clinical follow-up. It has no accuracy figure. Experimental screens are shown but not counted.</p>
+    <div class="row">
+      <button id="sum-btn">Write the summary</button>
+      <button id="copy-btn" class="secondary" hidden>Copy text</button>
+      <button id="print-btn" class="secondary" hidden>Print</button>
+      <button id="reset-btn" class="secondary">Start over</button>
+    </div>
+    <p class="muted" id="sum-status" aria-live="polite"></p>
     <div id="overall"></div>
   </section>
 </main>
@@ -42,48 +62,82 @@
 <script>
 const ORDER = ["clock", "motor", "eye", "speech"];
 const NAMES = { clock: "Clock drawing", motor: "Finger tapping", eye: "Eye movement", speech: "Speech" };
-const results = {};
+const results = {}, extras = {}, blank = {};
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
-
-function renderCard(m) {
-  const r = results[m], card = document.getElementById("card-" + m);
-  const body = card.querySelector(".body");
-  body.replaceChildren();
-  const tag = el("span", "tag " + r.status, { flagged: "Flagged", not_flagged: "Not flagged", not_run: "Not run" }[r.status]);
-  body.append(tag, el("p", "", r.label));
-  const keys = Object.keys(r.measured || {});
-  if (keys.length) {
-    const dl = el("dl");
-    keys.forEach(k => { dl.append(el("dt", "", k), el("dd", "", Array.isArray(r.measured[k]) ? (r.measured[k].join(", ") || "none") : r.measured[k])); });
-    body.append(dl);
-  }
-  body.append(el("p", "muted", "Evidence: " + r.evidence), el("p", "muted caveat", "Limits: " + r.caveat));
-}
+const $ = id => document.getElementById(id);
+const TAGS = { flagged: "Flagged", not_flagged: "Not flagged", not_run: "Not run" };
 
 async function post(url, data) {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
   return res.json();
 }
+const b64 = async blob => { const bytes = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (let i = 0; i < bytes.length; i += 32768) s += String.fromCharCode(...bytes.subarray(i, i + 32768)); return btoa(s); };
 
-function buildMotor(card) {
-  const body = card.querySelector(".extra");
-  body.innerHTML = "";
-  const intro = el("p", "muted", "Use your dominant hand. Tap the button below with one finger, as fast as you can, for 30 seconds. You get a 3 second countdown.");
-  const age = el("input"); age.type = "number"; age.min = 18; age.max = 110; age.value = 70;
-  const ageLabel = el("label", "", "Age: "); ageLabel.append(age);
-  const start = el("button", "", "Start the test");
-  const timer = el("div"); timer.id = "timer"; timer.setAttribute("aria-live", "polite");
-  const tap = el("button", "secondary", "Tap here"); tap.id = "tap"; tap.disabled = true;
-  body.append(intro, ageLabel, document.createElement("br"), start, timer, tap);
-  start.onclick = () => {
-    start.disabled = true; let n = 3; timer.textContent = n;
-    const cd = setInterval(() => {
-      n--; if (n > 0) { timer.textContent = n; return; }
-      clearInterval(cd); runTrial(Number(age.value), timer, tap, start);
-    }, 1000);
+function renderProgress() {
+  const p = $("progress"); p.replaceChildren();
+  const done = ORDER.filter(m => results[m].status !== "not_run").length;
+  p.append(el("span", "muted", done + " of 4 screens done:"));
+  ORDER.forEach(m => p.append(el("span", "tag " + results[m].status, NAMES[m] + " – " + TAGS[results[m].status])));
+}
+
+function renderCard(m) {
+  const r = results[m], card = $("card-" + m), body = card.querySelector(".body"), x = extras[m] || {};
+  body.replaceChildren();
+  card.querySelector(".tag-slot").replaceChildren(el("span", "tag " + r.status, TAGS[r.status]));
+  if (r.status !== "not_run" || r.measured && Object.keys(r.measured).length) body.append(el("p", "", r.label));
+  const keys = Object.keys(r.measured || {});
+  if (keys.length) {
+    const dl = el("dl");
+    keys.forEach(k => { const v = r.measured[k]; dl.append(el("dt", "", k), el("dd", "", Array.isArray(v) ? (v.join(", ") || "none") : (typeof v === "object" ? Object.entries(v).map(e => e.join(": ")).join(", ") : v))); });
+    body.append(dl);
+  }
+  if (x.preview) { const row = el("div", "row"); const img = el("img", "preview"); img.src = "data:image/png;base64," + x.preview; img.alt = "The drawing as the model saw it (cropped)"; row.append(img, el("span", "muted", "The drawing as the model saw it, after cleaning and cropping.")); body.append(row); }
+  if (x.transcript) { const d = el("details"); d.append(el("summary", "", "What the computer heard (shown here only, not saved)"), el("div", "transcript", x.transcript)); body.append(d); }
+  body.append(el("p", "muted", "Evidence: " + r.evidence), el("p", "muted caveat", "Limits: " + r.caveat));
+  renderProgress();
+}
+
+function setResult(m, r, extra) {
+  const { preview, transcript, ...clean } = r;     // images/transcripts stay in the page; only the plain result goes to the summary
+  results[m] = clean; extras[m] = { preview, transcript, ...extra };
+  renderCard(m);
+}
+
+/* ---------- clock ---------- */
+function buildClock(card) {
+  const host = card.querySelector(".extra");
+  host.append(el("p", "muted", "Ask the person to draw an analog clock showing 11:10 on white paper. Then upload a flat, well-lit photo or scan of it. The picture is processed on this computer and not saved."));
+  const file = el("input"); file.type = "file"; file.accept = "image/*"; file.setAttribute("aria-label", "Photo or scan of the clock drawing");
+  const msg = el("p", "muted"); msg.setAttribute("aria-live", "polite");
+  host.append(file, msg);
+  file.onchange = async () => {
+    if (!file.files[0]) return;
+    msg.textContent = "Analysing… (the first picture takes a few seconds longer)";
+    try {
+      const r = await post("/api/clock", { image: await b64(file.files[0]) });
+      if (r.error) throw new Error(r.error);
+      msg.textContent = r.status === "not_run" ? "That picture could not be read. Try a clearer photo." : "";
+      setResult("clock", r);
+    } catch (e) { msg.textContent = "Could not analyse: " + e.message; }
   };
 }
 
+/* ---------- motor ---------- */
+function buildMotor(card) {
+  const host = card.querySelector(".extra");
+  host.append(el("p", "muted", "Use the dominant hand. Tap the button below with one finger, as fast as you can, for 30 seconds. You get a 3 second countdown."));
+  const age = el("input"); age.type = "number"; age.min = 18; age.max = 110; age.value = 70; age.id = "age";
+  const lab = el("label", "", "Age: "); lab.htmlFor = "age";
+  const start = el("button", "", "Start the test");
+  const timer = el("div"); timer.id = "timer"; timer.setAttribute("aria-live", "polite");
+  const tap = el("button", "secondary", "Tap here"); tap.id = "tap"; tap.disabled = true;
+  const row = el("div", "row"); row.append(lab, age, start);
+  host.append(row, timer, tap);
+  start.onclick = () => {
+    start.disabled = true; let n = 3; timer.textContent = n;
+    const cd = setInterval(() => { n--; if (n > 0) { timer.textContent = n; return; } clearInterval(cd); runTrial(Number(age.value), timer, tap, start); }, 1000);
+  };
+}
 function runTrial(age, timer, tap, start) {
   const taps = []; const t0 = performance.now(); tap.disabled = false; tap.focus();
   const on = () => taps.push((performance.now() - t0) / 1000);
@@ -93,29 +147,96 @@ function runTrial(age, timer, tap, start) {
     timer.textContent = Math.max(0, left).toFixed(0) + " s";
     if (left > 0) return;
     clearInterval(tick); tap.disabled = true; tap.removeEventListener("pointerdown", on); timer.textContent = "Done";
-    results.motor = await post("/api/motor", { taps: taps.filter(t => t <= 30), age });
-    renderCard("motor"); start.disabled = false; start.textContent = "Repeat the test";
+    setResult("motor", await post("/api/motor", { taps: taps.filter(t => t <= 30), age }));
+    start.disabled = false; start.textContent = "Repeat the test";
   }, 200);
 }
 
-document.getElementById("sum-btn").onclick = async () => {
-  const out = document.getElementById("overall"); out.replaceChildren(el("p", "muted", "Writing…"));
-  const data = await post("/api/summary", { results: ORDER.map(m => results[m]) });
-  out.replaceChildren(el("p", "", data.combined.text));
-  ORDER.forEach(m => { const h = el("h2", "", NAMES[m]); out.append(h, el("p", "", data.summary.modalities[m])); });
-  out.append(el("p", "muted", "Written by: " + data.summary.source + (data.summary.note ? " (" + data.summary.note + ")" : "")));
-};
+/* ---------- eye (experimental) ---------- */
+function buildEye(card) {
+  const host = card.querySelector(".extra");
+  host.append(el("p", "muted caveat", "EXPERIMENTAL. A webcam cannot record what the model was trained on, so this result is shown but not counted in the follow-up rule. About 1 minute. Sit about an arm's length from the screen in good light and keep your head still. The camera is used only here; nothing is saved or sent anywhere."));
+  const btn = el("button", "", "Start the eye test"), msg = el("p", "muted"); msg.setAttribute("aria-live", "polite");
+  host.append(btn, msg);
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const { startEyeTest } = await import("/static/eye.js");
+      await startEyeTest(async (tasks, cal) => { setResult("eye", await post("/api/eye", { tasks, calibration: cal })); }, t => { msg.textContent = t; });
+    } catch (e) { msg.textContent = "Could not start the camera test: " + (e.name === "NotAllowedError" ? "camera permission was denied." : e.message); }
+    btn.disabled = false;
+  };
+}
 
+/* ---------- speech (experimental) ---------- */
+function buildSpeech(card) {
+  const host = card.querySelector(".extra");
+  host.append(el("p", "muted caveat", "EXPERIMENTAL, shown but not counted in the follow-up rule. Speak for one minute: “Describe everything that is happening in a busy family kitchen, in as much detail as you can.” The recording stays on this computer and is not saved. The first use downloads a speech model (about 460 MB) once."));
+  const btn = el("button", "", "Start recording (60 s)"), stop = el("button", "secondary", "Stop early"), msg = el("p", "muted");
+  stop.hidden = true; msg.setAttribute("aria-live", "polite");
+  const row = el("div", "row"); row.append(btn, stop); host.append(row, msg);
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream), chunks = [];
+      rec.ondataavailable = e => chunks.push(e.data);
+      const stopped = new Promise(r => { rec.onstop = r; });
+      rec.start(); let left = 60; stop.hidden = false; stop.onclick = () => rec.state === "recording" && rec.stop();
+      const tick = setInterval(() => { left--; msg.textContent = "Recording… " + left + " s left"; if (left <= 0 && rec.state === "recording") rec.stop(); }, 1000);
+      await stopped; clearInterval(tick); stop.hidden = true; stream.getTracks().forEach(t => t.stop());
+      const t0 = performance.now(), wait = setInterval(() => { msg.textContent = "Analysing… " + Math.round((performance.now() - t0) / 1000) + " s (the first time can take a few minutes)"; }, 1000);
+      const r = await post("/api/speech", { audio: await b64(new Blob(chunks)) });
+      clearInterval(wait);
+      if (r.error) throw new Error(r.error);
+      msg.textContent = ""; setResult("speech", r);
+    } catch (e) { msg.textContent = "Could not run the speech test: " + (e.name === "NotAllowedError" ? "microphone permission was denied." : e.message); }
+    btn.disabled = false; stop.hidden = true;
+  };
+}
+
+/* ---------- overall ---------- */
+let sumText = "";
+$("sum-btn").onclick = async () => {
+  const btn = $("sum-btn"), st = $("sum-status"), out = $("overall"); btn.disabled = true; out.replaceChildren();
+  const t0 = performance.now(), tick = setInterval(() => { st.textContent = "Writing… " + Math.round((performance.now() - t0) / 1000) + " s (can take up to 2 minutes on this computer)"; }, 1000);
+  try {
+    const data = await post("/api/summary", { results: ORDER.map(m => results[m]) });
+    out.append(el("p", "overall-text", data.combined.text));
+    const wrap = el("div", "sumpara"); ORDER.forEach(m => { wrap.append(el("h3", "", NAMES[m]), el("p", "", data.summary.modalities[m])); }); out.append(wrap);
+    const src = data.summary.source === "template" ? "fixed template" + (data.summary.note ? " (" + data.summary.note + ")" : "") : "local model " + data.summary.source + ", checked against the results";
+    out.append(el("p", "muted", "Written by: " + src));
+    sumText = data.combined.text + "\n\n" + ORDER.map(m => NAMES[m] + ": " + data.summary.modalities[m]).join("\n\n");
+    $("copy-btn").hidden = false; $("print-btn").hidden = false;
+  } catch (e) { out.append(el("p", "", "Could not write the summary: " + e.message)); }
+  clearInterval(tick); st.textContent = ""; btn.disabled = false;
+};
+$("copy-btn").onclick = async () => { try { await navigator.clipboard.writeText(sumText); $("sum-status").textContent = "Copied."; } catch { $("sum-status").textContent = "Copy failed; select the text instead."; } };
+$("print-btn").onclick = () => window.print();
+$("reset-btn").onclick = () => { if (confirm("Clear all results on this page and start over?")) location.reload(); };
+
+/* ---------- start-up ---------- */
 (async () => {
-  const ev = await (await fetch("/api/evidence")).json();
-  const host = document.getElementById("cards");
-  ORDER.forEach(m => {
-    results[m] = ev.not_run[m];
+  const [ev, st] = await Promise.all([fetch("/api/evidence").then(r => r.json()), fetch("/api/status").then(r => r.json()).catch(() => null)]);
+  const host = $("cards");
+  ORDER.forEach((m, i) => {
+    blank[m] = ev.not_run[m]; results[m] = ev.not_run[m];
     const card = el("section", "card"); card.id = "card-" + m;
-    card.append(el("h2", "", NAMES[m]), el("div", "extra"), el("div", "body"));
-    host.append(card); renderCard(m);
-    if (m === "motor") buildMotor(card);
+    const head = el("div", "head"); head.append(el("span", "num", String(i + 1)), el("h2", "", NAMES[m]), el("span", "tag-slot"));
+    if (m === "eye" || m === "speech") head.append(el("span", "tag exp", "Experimental · not counted"));
+    card.append(head, el("div", "extra"), el("div", "body"));
+    host.append(card);
+    ({ clock: buildClock, motor: buildMotor, eye: buildEye, speech: buildSpeech })[m](card);
+    renderCard(m);
   });
+  if (st) {
+    const notes = [];
+    for (const [m, files] of Object.entries(st.missing_files)) notes.push(NAMES[m] + " is unavailable: missing " + files.join(", ") + " in models/.");
+    if (!st.vendor) notes.push("The eye test is unavailable: the MediaPipe files in app/static/vendor/ are missing.");
+    if (!st.ollama.running) notes.push("Ollama is not running, so the summary will use a fixed template.");
+    else if (!st.ollama.model) notes.push("The summary model is not installed (run: ollama pull llama3.1:8b); the summary will use a fixed template.");
+    if (notes.length) { const b = el("div", "banner"); b.setAttribute("role", "status"); notes.forEach(n => b.append(el("p", "", n))); $("banner").append(b); }
+  }
 })();
 </script>
 </body>

@@ -6,3 +6,7 @@ scikit-learn
 scipy
 pytest
 pillow
+# Laptop app (inference only, Python 3.13): python -m pip install -r requirements-local.txt
+onnxruntime
+opencv-python-headless
+faster-whisper

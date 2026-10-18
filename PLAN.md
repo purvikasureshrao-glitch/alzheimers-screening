@@ -178,10 +178,10 @@ severity scale we construct.
 
 ```
 MODALITY   TASK                  BAL ACC  F1   AUC  95% CI  PROTOCOL
-Clock      dementia flag           ?      ?     ?    ?-?    SPID-grouped test split
+Clock      dementia flag         0.654  0.157 0.707 0.605-0.707  SPID-grouped NHATS test split, n=1089 people (FINDINGS 3f)
 Motor      CN/aMCI/AD (if data)    -      -     -    -      features only until data
-Eye        AD vs NC                ?      ?     ?    ?-?    LOSO, n=20 (pilot)
-Speech     AD vs control         0.759  0.750  -   0.675-0.834  5-fold CV, n=108 (ensemble; per-network in FINDINGS 9)
+Eye        AD vs NC              0.300    -   0.240  0.101-0.505  LOSO, n=20 (pilot, inconclusive; webcam path experimental, not counted: FINDINGS 8c)
+Speech     AD vs control         0.759  0.750  -   0.675-0.834  5-fold CV, n=108 (ensemble on HUMAN transcripts; per-network in FINDINGS 9). Live app path (Whisper small, experimental, not counted): 0.639 (0.546-0.731), FINDINGS 9b/9d
 ```
 
 No fifth row, no average. NHATS, ADReSS and ADEM share zero participants, so no combined

@@ -13,6 +13,12 @@ BANNED = re.compile(r"\b(diagnos\w*|stage\s*\d|early[- ]stage|late[- ]stage|mild
                     r"likelihood|risk score|overall (score|accuracy)|probability of)\b", re.I)
 
 
+SCHEMA = {"type": "object", "additionalProperties": False, "required": ["modalities", "overall"],
+          "properties": {"modalities": {"type": "object", "additionalProperties": False, "required": list(ORDER),
+                                        "properties": {m: {"type": "string"} for m in ORDER}},
+                         "overall": {"type": "string"}}}   # passed to Ollama as `format`: the shape is enforced, the wording still validated
+
+
 def template(results, combo):
     by = {r.modality: r for r in results}
     parts = {}
@@ -61,8 +67,9 @@ def summarize(results, model="llama3.1:8b", url="http://localhost:11434/api/gene
         return out
     post = post or _ollama
     try:
-        reply = post(url, {"model": model, "prompt": build_prompt(results, combo), "stream": False, "format": "json"}, timeout)
+        reply = post(url, {"model": model, "prompt": build_prompt(results, combo), "stream": False, "format": SCHEMA}, timeout)
         d = validate(reply, results, combo)
+        d["overall"] = combo["text"]   # the rule outcome is fixed text, never model-written (it carries the "no accuracy claim" line)
         d["source"] = model
         return d
     except Exception as e:  # unreachable model, invalid JSON, or a rule violation: fall back, never show the model's text

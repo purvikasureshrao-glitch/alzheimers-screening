@@ -1,0 +1,190 @@
+2026-10-17 18:54:33  ---- session start ----
+
+2026-10-17 18:54:34  >>> H1 label table
+images indexed: 54027
+  KEPT                       53914
+  clock_code_not_a_score     89
+  no_survey_match            24
+kept images: 53914   unique SPIDs: 10887
+clock score counts (kept): {0: 494, 1: 1837, 2: 6089, 3: 11700, 4: 20057, 5: 13737}
+dementia = 1: 2568 of 53914 (4.8%)
+by round (kept):
+          n  dem
+round           
+1      6918  202
+2      5504  224
+3      4459  214
+4      3671  192
+5      7076  297
+6      5997  288
+7      5256  294
+8      4658  282
+9      4186  258
+10     3098  118
+11     3091  199
+<<< H1 label table done in 9.4s
+
+2026-10-17 18:54:43  >>> H2 split
+       images  spids  dementia_images  dementia_pct
+split                                              
+test     5344   1089              254           4.8
+train   47614   9596             2272           4.8
+val       956    202               42           4.4
+SPIDs in more than one split: 0
+<<< H2 split done in 0.1s
+
+2026-10-17 18:54:43  >>> SMOKE TEST
+prep 0/44 [1s]
+prep done: 44 images, 0 failed to read, 2s
+crop-net step 2/4 val MSE 0.23394 best 0.23394 lr 2.0e-05 [7s]
+crop-net step 4/4 val MSE 0.23388 best 0.23388 lr 2.0e-05 [12s]
+crop-net best synthetic val MSE 0.23388
+crop 44/44 [1s]
+crop QC (descriptive, no images dropped): ink touches the border in 97.7% of crops; ink fraction < 0.5% in 0.0%; median ink fraction 3.9%
+Downloading: "https://download.pytorch.org/models/vit_b_16-c867db91.pth" to /root/.cache/torch/hub/checkpoints/vit_b_16-c867db91.pth
+ViT-B/16 224px; train 24, val 10, test 10 images
+head epoch 1/1 train MSE 0.17536 val MSE 0.17640 best 0.17640 lr 2.0e-05 [5s]
+full epoch 1/1 train MSE 0.18502 val MSE 0.16567 best 0.16567 lr 2.0e-05 [10s]
+ViT best balanced-val MSE: head 0.17640, full 0.16567
+threshold (max balanced accuracy on natural validation set): 0.470
+balanced accuracy 0.111 (95% CI 0.000-0.274), n=10, NHATS test split, SPID-grouped, threshold 0.470 chosen on validation (n_val=10)
+F1 0.000 (95% CI 0.000-0.000), n=10, NHATS test split, SPID-grouped, threshold 0.470 chosen on validation (n_val=10)
+AUC 0.000 (95% CI 0.000-0.000), n=10, NHATS test split, SPID-grouped, threshold 0.470 chosen on validation (n_val=10)
+clock-score MSE on test (0-5 scale): 2.068, n=10 images, 10 SPIDs; mean abs error 1.241
+test dementia prevalence 10.0%; flagged 70.0%
+ViT ONNX vs PyTorch: max |diff| 5.96e-08; same dementia flag on 10 of 10
+Crop-Net ONNX vs PyTorch: max |diff| 5.96e-08
+clock pipeline finished in 1.2 min
+SMOKE OK
+<<< SMOKE TEST done in 69.0s
+
+2026-10-17 18:55:53  >>> FULL RUN part 1
+prep 0/53914 [1s]
+prep 2000/53914 [45s]
+prep 4000/53914 [89s]
+prep 6000/53914 [134s]
+prep 8000/53914 [188s]
+prep 10000/53914 [243s]
+prep 12000/53914 [335s]
+prep 14000/53914 [449s]
+prep 16000/53914 [523s]
+prep 18000/53914 [588s]
+prep 20000/53914 [657s]
+prep 22000/53914 [722s]
+prep 24000/53914 [788s]
+prep 26000/53914 [851s]
+prep 28000/53914 [923s]
+prep 30000/53914 [1018s]
+prep 32000/53914 [1111s]
+prep 34000/53914 [1194s]
+prep 36000/53914 [1274s]
+prep 38000/53914 [1347s]
+prep 40000/53914 [1404s]
+prep 42000/53914 [1455s]
+prep 44000/53914 [1499s]
+prep 46000/53914 [1544s]
+prep 48000/53914 [1587s]
+prep 50000/53914 [1644s]
+prep 52000/53914 [1704s]
+prep done: 53914 images, 0 failed to read, 1758s
+crop-net step 100/6000 val MSE 0.16223 best 0.16223 lr 2.0e-05 [110s]
+crop-net step 200/6000 val MSE 0.16222 best 0.16222 lr 2.0e-05 [224s]
+crop-net step 300/6000 val MSE 0.16222 best 0.16222 lr 2.0e-05 [334s]
+crop-net step 400/6000 val MSE 0.16222 best 0.16222 lr 2.0e-05 [449s]
+crop-net step 500/6000 val MSE 0.16222 best 0.16222 lr 2.0e-05 [558s]
+crop-net step 600/6000 val MSE 0.16222 best 0.16222 lr 2.0e-05 [672s]
+crop-net step 700/6000 val MSE 0.16222 best 0.16222 lr 4.0e-06 [781s]
+crop-net step 800/6000 val MSE 0.16222 best 0.16222 lr 4.0e-06 [895s]
+crop-net step 900/6000 val MSE 0.16222 best 0.16222 lr 4.0e-06 [1005s]
+crop-net step 1000/6000 val MSE 0.16222 best 0.16222 lr 4.0e-06 [1118s]
+crop-net step 1100/6000 val MSE 0.16222 best 0.16222 lr 4.0e-06 [1226s]
+crop-net step 1200/6000 val MSE 0.16222 best 0.16222 lr 4.0e-06 [1340s]
+crop-net step 1300/6000 val MSE 0.16222 best 0.16222 lr 8.0e-07 [1456s]
+crop-net step 1400/6000 val MSE 0.16222 best 0.16222 lr 8.0e-07 [1571s]
+crop-net step 1500/6000 val MSE 0.16222 best 0.16222 lr 8.0e-07 [1685s]
+crop-net step 1600/6000 val MSE 0.16222 best 0.16222 lr 8.0e-07 [1793s]
+crop-net step 1700/6000 val MSE 0.16222 best 0.16222 lr 8.0e-07 [1908s]
+crop-net step 1800/6000 val MSE 0.16222 best 0.16222 lr 8.0e-07 [2017s]
+crop-net step 1900/6000 val MSE 0.16222 best 0.16222 lr 1.6e-07 [2126s]
+crop-net step 2000/6000 val MSE 0.16222 best 0.16222 lr 1.6e-07 [2234s]
+crop-net step 2100/6000 val MSE 0.16222 best 0.16222 lr 1.6e-07 [2348s]
+crop-net step 2200/6000 val MSE 0.16222 best 0.16222 lr 1.6e-07 [2458s]
+crop-net step 2300/6000 val MSE 0.16222 best 0.16222 lr 1.6e-07 [2567s]
+crop-net step 2400/6000 val MSE 0.16222 best 0.16222 lr 1.6e-07 [2681s]
+crop-net step 2500/6000 val MSE 0.16222 best 0.16222 lr 3.2e-08 [2790s]
+crop-net step 2600/6000 val MSE 0.16222 best 0.16222 lr 3.2e-08 [2900s]
+crop-net step 2700/6000 val MSE 0.16222 best 0.16222 lr 3.2e-08 [3009s]
+crop-net step 2800/6000 val MSE 0.16222 best 0.16222 lr 3.2e-08 [3118s]
+crop-net step 2900/6000 val MSE 0.16222 best 0.16222 lr 3.2e-08 [3227s]
+crop-net step 3000/6000 val MSE 0.16222 best 0.16222 lr 3.2e-08 [3336s]
+crop-net step 3100/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [3445s]
+crop-net step 3200/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [3554s]
+crop-net step 3300/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [3663s]
+crop-net step 3400/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [3772s]
+crop-net step 3500/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [3881s]
+crop-net step 3600/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [3990s]
+crop-net step 3700/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [4099s]
+crop-net step 3800/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [4208s]
+crop-net step 3900/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [4316s]
+crop-net step 4000/6000 val MSE 0.16222 best 0.16222 lr 6.4e-09 [4425s]
+early stopping
+crop-net best synthetic val MSE 0.16222
+crop 256/53914 [8s]
+crop 2816/53914 [82s]
+crop 5376/53914 [156s]
+crop 7936/53914 [229s]
+crop 10496/53914 [300s]
+crop 13056/53914 [376s]
+crop 15616/53914 [450s]
+crop 18176/53914 [523s]
+crop 20736/53914 [596s]
+crop 23296/53914 [668s]
+crop 25856/53914 [741s]
+crop 28416/53914 [815s]
+crop 30976/53914 [891s]
+crop 33536/53914 [966s]
+crop 36096/53914 [1041s]
+crop 38656/53914 [1114s]
+crop 41216/53914 [1186s]
+crop 43776/53914 [1261s]
+crop 46336/53914 [1336s]
+crop 48896/53914 [1412s]
+crop 51456/53914 [1488s]
+crop 53914/53914 [1560s]
+crop QC (descriptive, no images dropped): ink touches the border in 90.2% of crops; ink fraction < 0.5% in 1.6%; median ink fraction 2.8%
+stopped after the crop stage (part 1 done)
+<<< FULL RUN part 1 done in 7750.6s
+
+2026-10-17 21:05:08  >>> FULL RUN part 2
+prep: already done
+cropnet: already done
+crop: already done
+ViT-B/16 224px; train 47614, val 956, test 5344 images
+head epoch 1/10 train MSE 0.09065 val MSE 0.07660 best 0.07660 lr 2.0e-05 [72s]
+head epoch 2/10 train MSE 0.07160 val MSE 0.06926 best 0.06926 lr 2.0e-05 [144s]
+head epoch 3/10 train MSE 0.07054 val MSE 0.06848 best 0.06848 lr 2.0e-05 [216s]
+head epoch 4/10 train MSE 0.06814 val MSE 0.06787 best 0.06787 lr 2.0e-05 [288s]
+head epoch 5/10 train MSE 0.06886 val MSE 0.06644 best 0.06644 lr 2.0e-05 [360s]
+head epoch 6/10 train MSE 0.06697 val MSE 0.06670 best 0.06644 lr 2.0e-05 [425s]
+head epoch 7/10 train MSE 0.06750 val MSE 0.06656 best 0.06644 lr 4.0e-06 [491s]
+head epoch 8/10 train MSE 0.06540 val MSE 0.06612 best 0.06612 lr 4.0e-06 [567s]
+head epoch 9/10 train MSE 0.06717 val MSE 0.06592 best 0.06592 lr 4.0e-06 [637s]
+head epoch 10/10 train MSE 0.06493 val MSE 0.06556 best 0.06556 lr 4.0e-06 [707s]
+full epoch 1/12 train MSE 0.06685 val MSE 0.06466 best 0.06466 lr 2.0e-05 [202s]
+full epoch 2/12 train MSE 0.06123 val MSE 0.06225 best 0.06225 lr 2.0e-05 [413s]
+full epoch 3/12 train MSE 0.05892 val MSE 0.07196 best 0.06225 lr 2.0e-05 [624s]
+full epoch 4/12 train MSE 0.05761 val MSE 0.06666 best 0.06225 lr 4.0e-06 [814s]
+full epoch 5/12 train MSE 0.05311 val MSE 0.06994 best 0.06225 lr 4.0e-06 [1019s]
+full epoch 6/12 train MSE 0.05293 val MSE 0.06895 best 0.06225 lr 8.0e-07 [1224s]
+full: early stopping
+ViT best balanced-val MSE: head 0.06556, full 0.06225
+threshold (max balanced accuracy on natural validation set): 0.060
+balanced accuracy 0.654 (95% CI 0.605-0.707), n=1089, NHATS test split, SPID-grouped, threshold 0.060 chosen on validation (n_val=956)
+F1 0.157 (95% CI 0.124-0.191), n=1089, NHATS test split, SPID-grouped, threshold 0.060 chosen on validation (n_val=956)
+AUC 0.707 (95% CI 0.631-0.780), n=1089, NHATS test split, SPID-grouped, threshold 0.060 chosen on validation (n_val=956)
+clock-score MSE on test (0-5 scale): 0.673, n=5344 images, 1089 SPIDs; mean abs error 0.636
+test dementia prevalence 4.8%; flagged 32.8%
+ViT ONNX vs PyTorch: max |diff| 2.98e-07; same dementia flag on 16 of 16
+Crop-Net ONNX vs PyTorch: max |diff| 9.39e-08
+clock pipeline finished in 33.4 min
+<<< FULL RUN part 2 done in 2005.4s
