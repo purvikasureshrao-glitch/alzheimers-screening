@@ -683,3 +683,12 @@ real hardware), speech 60 s (microphone - never run; Whisper small is cached), t
 **Not tested:** eye test on a webcam, speech on a microphone, doctor login with the real password (not read), anything on a second device.
 **Test records left in Supabase (delete in Table Editor):** Storage Check, Net Test, Test Patient, Auto Test patients.
 **Next (user, 2026-10-20):** run the full flow incl. webcam and microphone; regenerate the Supabase key afterwards.
+
+---
+
+## 2026-10-19 (end of session: resume point)
+
+**State:** all four modalities + patient/doctor flow + Supabase working; committed through `7a47ba1` (not pushed). Server stopped.
+**Resume here (2026-10-20, user runs the check):** `run_app.bat` (keep window open) -> full flow incl. webcam eye test and microphone speech test -> doctor login with own credentials -> send any error text (F12 > Console or the red message under a form).
+**Then:** delete test patients in Supabase (Storage Check, Net Test, Test Patient, Auto Test); regenerate the Supabase key; fix whatever the device test finds.
+**Still unvalidated (rule 7):** mouse-drawn clock, webcam eye, microphone speech with the redrawn Cookie Theft picture. Eye and speech are not counted in the 2-of-4 rule.
