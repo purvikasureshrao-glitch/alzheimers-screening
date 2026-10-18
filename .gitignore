@@ -35,3 +35,6 @@ results/clock_test_preds.csv
 results/crop_qc.csv
 .env.*
 *.env.txt
+
+# Cookie Theft picture: licence unconfirmed, keep out of git
+app/static/cookie_theft.*
