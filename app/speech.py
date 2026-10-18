@@ -2,7 +2,7 @@
 
 Trained on ADReSS Cookie Theft recordings (human-transcript-free features, FINDINGS 9b); the 5-fold CV for this exact input is 0.639 (0.546-0.731),
 n=108. Differences from that CV, all unvalidated [OURS]: faster-whisper (CTranslate2, int8) instead of openai-whisper; a laptop microphone;
-the Cookie Theft picture shown on a laptop screen (not the original clinical setting); a fixed-length recording. The result is never counted in the
+the redrawn "Updated Cookie Theft" picture (Heyselaar 2021) shown on a laptop screen, not the original Boston Exam drawing the ADReSS speakers saw (not the original clinical setting); a fixed-length recording. The result is never counted in the
 2-of-4 rule. `MIN_WORDS` is a data-quality gate, not a clinical threshold.
 """
 import io
