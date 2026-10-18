@@ -26,3 +26,10 @@ Thumbs.db
 # Colab upload bundles (made locally, re-uploaded each Colab session)
 colab_upload/
 .pytest_cache/
+
+# Local secrets and saved records
+.env
+data/
+results/split.csv
+results/clock_test_preds.csv
+results/crop_qc.csv

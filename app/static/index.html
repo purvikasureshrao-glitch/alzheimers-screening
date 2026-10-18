@@ -3,241 +3,400 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Memory Screening</title>
+<title>Alzheimer's Screening</title>
 <style>
-  :root { --bg:#f6f7f9; --card:#fff; --ink:#1c2230; --muted:#5b6475; --line:#dde1e8; --accent:#2457d6; --flag:#b4540a; --ok:#1f7a4d; --warn-bg:#fff4e0; --warn-line:#e0b060; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#12151c; --card:#1b2030; --ink:#e8ebf2; --muted:#a2abbd; --line:#2c3347; --accent:#7ea2ff; --flag:#f0a15c; --ok:#6fcf9b; --warn-bg:#2e2616; --warn-line:#8a6a2c; } }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
-  main { max-width: 780px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 1.5rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin: 0; }
-  p { margin: 6px 0; } .muted { color: var(--muted); font-size: .92rem; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin:14px 0; }
-  .head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:6px; }
-  .num { width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:inline-grid; place-items:center; font-size:.85rem; }
-  .tag { display:inline-block; font-size:.8rem; padding:2px 8px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
-  .tag.flagged { color:var(--flag); border-color:var(--flag); } .tag.not_flagged { color:var(--ok); border-color:var(--ok); }
+  :root {
+    --bg:#f3f6f8; --bg2:#e6eef3; --card:#ffffff; --ink:#16202b; --muted:#5d6b7a; --line:#dbe3ea;
+    --accent:#1f7a8c; --accent-ink:#ffffff; --accent-soft:#e1f1f4; --flag:#b4540a; --flag-soft:#fff1e2; --ok:#1f7a4d; --ok-soft:#e3f5ec;
+    --warn-bg:#fff6e3; --warn-line:#e6bf6d; --shadow:0 1px 2px rgba(20,40,60,.05), 0 8px 24px rgba(20,40,60,.07); --r:16px;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --bg:#0f1519; --bg2:#142029; --card:#17212a; --ink:#e7eef4; --muted:#9aa9b8; --line:#273542;
+    --accent:#4fb3c6; --accent-ink:#06222a; --accent-soft:#16323a; --flag:#f0a15c; --flag-soft:#33261a; --ok:#6fcf9b; --ok-soft:#173226;
+    --warn-bg:#2e2616; --warn-line:#8a6a2c; --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); } }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; min-height:100vh; color:var(--ink); font:16px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif;
+         background:radial-gradient(1100px 500px at 80% -10%, var(--bg2), transparent 70%), var(--bg); }
+  main { max-width:860px; margin:0 auto; padding:28px 18px 80px; }
+  h1,h2,h3 { line-height:1.2; margin:0; } h1 { font-size:2rem; letter-spacing:-.02em; } h2 { font-size:1.35rem; } h3 { font-size:1.05rem; }
+  p { margin:8px 0; } .muted { color:var(--muted); } .small { font-size:.9rem; }
+  .brand { display:flex; align-items:center; gap:10px; margin-bottom:22px; cursor:pointer; width:max-content; }
+  .logo { width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg,var(--accent),#5a7fd6); display:grid; place-items:center; color:#fff; font-weight:700; }
+  .brand b { font-size:1.05rem; }
+  .view { animation:rise .45s cubic-bezier(.2,.7,.2,1) both; } .view[hidden] { display:none; }
+  @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion:reduce) { .view, .step-panel { animation:none !important; } * { transition:none !important; } html { scroll-behavior:auto; } }
+  .hero { text-align:center; padding:34px 0 26px; } .hero p { max-width:560px; margin:12px auto 0; font-size:1.05rem; }
+  .choices { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:18px; margin-top:26px; }
+  .choice { text-align:left; background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:var(--r); padding:26px; box-shadow:var(--shadow);
+            cursor:pointer; transition:transform .2s, border-color .2s, box-shadow .2s; font:inherit; }
+  .choice:hover { transform:translateY(-3px); border-color:var(--accent); } .choice .ico { font-size:2rem; } .choice h2 { margin:10px 0 4px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:22px; margin:16px 0; box-shadow:var(--shadow); }
+  .stepper { display:flex; gap:6px; margin:6px 0 18px; flex-wrap:wrap; }
+  .stepper .s { flex:1 1 90px; min-width:84px; font-size:.78rem; color:var(--muted); }
+  .stepper .bar { height:6px; border-radius:99px; background:var(--line); margin-bottom:6px; overflow:hidden; position:relative; }
+  .stepper .bar::after { content:""; position:absolute; inset:0; background:var(--accent); transform:scaleX(0); transform-origin:left; transition:transform .5s; }
+  .stepper .s.done .bar::after, .stepper .s.now .bar::after { transform:scaleX(1); } .stepper .s.now { color:var(--ink); font-weight:600; } .stepper .s.now .bar::after { opacity:.55; }
+  .step-panel { animation:rise .4s both; } .step-panel[hidden] { display:none; }
+  label { display:block; font-size:.9rem; font-weight:600; margin-bottom:4px; }
+  input, select { font:inherit; width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); transition:border-color .15s, box-shadow .15s; }
+  input:focus, select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; margin:14px 0; }
+  button { font:inherit; font-weight:600; padding:11px 20px; border-radius:12px; border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink); cursor:pointer; transition:transform .12s, opacity .15s, background .15s; }
+  button:hover:not(:disabled) { transform:translateY(-1px); } button:active:not(:disabled) { transform:none; } button:disabled { opacity:.45; cursor:default; }
+  button.secondary { background:transparent; color:var(--accent); } button.link { border:none; background:none; color:var(--muted); padding:6px 8px; font-weight:500; }
+  button:focus-visible, .choice:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:12px 0; } .spacer { flex:1; }
+  .tag { display:inline-block; font-size:.78rem; font-weight:600; padding:3px 10px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
+  .tag.flagged { color:var(--flag); background:var(--flag-soft); border-color:transparent; } .tag.not_flagged { color:var(--ok); background:var(--ok-soft); border-color:transparent; }
   .tag.exp { border-style:dashed; }
-  button { font:inherit; padding:10px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
-  button.secondary { background:transparent; color:var(--accent); } button:disabled { opacity:.5; cursor:default; }
-  button:focus-visible, input:focus-visible, summary:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
-  #tap { width:100%; height:140px; font-size:1.3rem; margin-top:10px; }
-  input[type=number] { font:inherit; width:6rem; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
-  dl { display:grid; grid-template-columns: auto 1fr; gap:2px 12px; margin:8px 0; } dt { color:var(--muted); } dd { margin:0; }
-  .caveat { border-left:3px solid var(--line); padding-left:10px; margin-top:8px; }
-  .banner { background:var(--warn-bg); border:1px solid var(--warn-line); border-radius:10px; padding:10px 14px; margin:12px 0; font-size:.92rem; }
-  .progress { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; } .progress span { font-size:.85rem; }
-  #timer { font-size:2rem; font-variant-numeric: tabular-nums; }
-  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:8px 0; }
-  img.preview { width:160px; height:160px; object-fit:contain; background:#000; border-radius:8px; border:1px solid var(--line); }
-  details { margin-top:8px; } summary { cursor:pointer; color:var(--muted); font-size:.92rem; }
-  .transcript { white-space:pre-wrap; background:var(--bg); border-radius:8px; padding:8px 10px; font-size:.92rem; }
-  .overall-text { white-space:pre-wrap; } .sumpara h3 { font-size:1rem; margin:12px 0 2px; }
-  @media print { button, input, .banner, .progress, .extra { display:none !important; } body { background:#fff; color:#000; } .card { break-inside:avoid; } }
+  .note { background:var(--warn-bg); border:1px solid var(--warn-line); border-radius:12px; padding:10px 14px; font-size:.92rem; margin:12px 0; }
+  .note.info { background:var(--accent-soft); border-color:transparent; }
+  #clock-canvas { width:100%; max-width:440px; aspect-ratio:1; background:#fff; border:2px solid var(--line); border-radius:var(--r); touch-action:none; cursor:crosshair; display:block; margin:10px auto; }
+  #tap { width:100%; height:150px; font-size:1.4rem; border-radius:var(--r); margin-top:10px; }
+  #timer { font-size:2.4rem; font-weight:700; font-variant-numeric:tabular-nums; text-align:center; }
+  .picture { display:block; max-width:100%; max-height:380px; margin:10px auto; border-radius:12px; border:1px solid var(--line); background:#fff; }
+  .placeholder { border:2px dashed var(--line); border-radius:12px; padding:30px; text-align:center; color:var(--muted); }
+  .result { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  .result[hidden] { display:none; }
+  dl { display:grid; grid-template-columns:auto 1fr; gap:3px 14px; margin:8px 0; } dt { color:var(--muted); } dd { margin:0; }
+  img.preview { width:150px; height:150px; object-fit:contain; background:#000; border-radius:10px; border:1px solid var(--line); }
+  .overall { font-size:1.12rem; padding:16px; border-radius:12px; background:var(--accent-soft); white-space:pre-wrap; }
+  .overall.follow { background:var(--flag-soft); }
+  .spinner { width:20px; height:20px; border:3px solid var(--line); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; display:inline-block; vertical-align:middle; margin-right:8px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .code { font-size:1.6rem; font-weight:700; letter-spacing:.06em; padding:6px 14px; border-radius:10px; background:var(--accent-soft); display:inline-block; }
+  table { width:100%; border-collapse:collapse; } td, th { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--muted); font-weight:600; width:40%; }
+  .hit { width:100%; text-align:left; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:12px; margin:6px 0; display:flex; justify-content:space-between; }
+  .sumpara h3 { margin-top:12px; }
+  @media print { .brand, button, .stepper, .row, .note { display:none !important; } body { background:#fff; color:#000; } .card { box-shadow:none; break-inside:avoid; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Memory screening</h1>
-  <p class="muted">Four short, independent screens. This is a screening aid, not a diagnosis. Everything stays on this computer; nothing is uploaded and no name is stored. Results disappear when this page is closed.</p>
+  <div class="brand" id="brand" role="button" tabindex="0" aria-label="Back to start"><div class="logo">A</div><b>Alzheimer's Screening</b></div>
   <div id="banner"></div>
-  <div class="progress" id="progress" aria-live="polite"></div>
 
-  <div id="cards"></div>
-
-  <section class="card" id="overall-card">
-    <div class="head"><h2>Overall</h2></div>
-    <p class="muted">The only combination is a stated rule: 2 or more counted screens flagged recommends clinical follow-up. It has no accuracy figure. Experimental screens are shown but not counted.</p>
-    <div class="row">
-      <button id="sum-btn">Write the summary</button>
-      <button id="copy-btn" class="secondary" hidden>Copy text</button>
-      <button id="print-btn" class="secondary" hidden>Print</button>
-      <button id="reset-btn" class="secondary">Start over</button>
+  <!-- landing -->
+  <section class="view" id="view-landing">
+    <div class="hero">
+      <h1>Four short checks, one clear picture.</h1>
+      <p class="muted">A screening aid that looks at drawing, movement, eyes and speech. It is not a diagnosis; a clinician reviews every result.</p>
     </div>
-    <p class="muted" id="sum-status" aria-live="polite"></p>
-    <div id="overall"></div>
+    <div class="choices">
+      <button class="choice" id="go-patient"><div class="ico">🧑</div><h2>I'm a patient</h2><p class="muted">Answer a few questions, then do four short tasks. About 10 minutes.</p></button>
+      <button class="choice" id="go-doctor"><div class="ico">🩺</div><h2>I'm a doctor</h2><p class="muted">Log in and look up a patient by name or ID to review their results.</p></button>
+    </div>
+  </section>
+
+  <!-- patient -->
+  <section class="view" id="view-patient" hidden>
+    <div class="stepper" id="stepper" aria-label="Progress"></div>
+
+    <div class="card step-panel" id="step-details">
+      <h2>About you</h2>
+      <p class="muted small">These answers are saved for your doctor. They are not used to change any test result.</p>
+      <form id="q-form" autocomplete="off">
+        <div class="grid">
+          <div><label for="q-name">Full name *</label><input id="q-name" required></div>
+          <div><label for="q-age">Age *</label><input id="q-age" type="number" min="18" max="110" required></div>
+          <div><label for="q-gender">Gender</label><select id="q-gender"><option value="">Select…</option><option>Female</option><option>Male</option><option>Other</option><option>Prefer not to say</option></select></div>
+          <div><label for="q-eth">Ethnicity</label><select id="q-eth"><option value="">Select…</option><option>Asian</option><option>Black or African</option><option>Hispanic or Latino</option><option>White</option><option>Mixed or multiple</option><option>Other</option><option>Prefer not to say</option></select></div>
+          <div><label for="q-edu">Education</label><select id="q-edu"><option value="">Select…</option><option>Less than high school</option><option>High school</option><option>Some college</option><option>Bachelor's degree</option><option>Postgraduate</option></select></div>
+          <div><label for="q-sys">Blood pressure, top number (systolic)</label><input id="q-sys" type="number" min="70" max="250" placeholder="e.g. 130"></div>
+          <div><label for="q-dia">Blood pressure, bottom number (diastolic)</label><input id="q-dia" type="number" min="40" max="150" placeholder="e.g. 80"></div>
+          <div><label for="q-diab">Diabetes</label><select id="q-diab"><option value="">Select…</option><option>No</option><option>Type 2</option><option>Type 1</option><option>Not sure</option></select></div>
+          <div><label for="q-htn">Told you have high blood pressure?</label><select id="q-htn"><option value="">Select…</option><option>No</option><option>Yes</option><option>Not sure</option></select></div>
+          <div><label for="q-chol">High cholesterol?</label><select id="q-chol"><option value="">Select…</option><option>No</option><option>Yes</option><option>Not sure</option></select></div>
+          <div><label for="q-fam">Parent or sibling with dementia?</label><select id="q-fam"><option value="">Select…</option><option>No</option><option>Yes</option><option>Not sure</option></select></div>
+          <div><label for="q-smoke">Smoking</label><select id="q-smoke"><option value="">Select…</option><option>Never</option><option>Former</option><option>Current</option></select></div>
+          <div><label for="q-head">Serious head injury?</label><select id="q-head"><option value="">Select…</option><option>No</option><option>Yes</option></select></div>
+          <div><label for="q-hear">Hearing loss?</label><select id="q-hear"><option value="">Select…</option><option>No</option><option>Yes</option></select></div>
+          <div><label for="q-dep">Depression or low mood?</label><select id="q-dep"><option value="">Select…</option><option>No</option><option>Yes</option></select></div>
+          <div><label for="q-act">Physical activity</label><select id="q-act"><option value="">Select…</option><option>Rarely</option><option>1–2 days a week</option><option>3 or more days a week</option></select></div>
+        </div>
+        <div class="row"><span class="spacer"></span><button type="submit" id="q-submit">Continue</button></div>
+      </form>
+    </div>
+
+    <div class="card step-panel" id="step-clock" hidden>
+      <h2>1 · Draw a clock</h2>
+      <p class="muted">Using the mouse, draw a clock face with all the numbers, and set the hands to <b>ten past eleven</b> (11:10).</p>
+      <canvas id="clock-canvas" width="600" height="600" aria-label="Drawing area for the clock"></canvas>
+      <div class="row"><button class="secondary" id="clock-clear">Clear</button><span class="spacer"></span><button id="clock-done">Submit drawing</button></div>
+      <p class="muted small" id="clock-msg" aria-live="polite"></p><div class="result" id="res-clock" hidden></div>
+      <div class="row"><span class="spacer"></span><button class="secondary" id="clock-next" hidden>Next: finger tapping →</button></div>
+    </div>
+
+    <div class="card step-panel" id="step-motor" hidden>
+      <h2>2 · Finger tapping</h2>
+      <p class="muted">Use your usual hand. When the countdown ends, tap the big button with one finger as fast as you can for 30 seconds.</p>
+      <div id="timer" aria-live="polite">Ready</div>
+      <button class="secondary" id="tap" disabled>Tap here</button>
+      <div class="row"><button id="motor-start">Start</button></div>
+      <div class="result" id="res-motor" hidden></div>
+      <div class="row"><span class="spacer"></span><button class="secondary" id="motor-next" hidden>Next: eye test →</button></div>
+    </div>
+
+    <div class="card step-panel" id="step-eye" hidden>
+      <h2>3 · Eye movement <span class="tag exp">Experimental · not counted</span></h2>
+      <p class="muted">Three short tasks using your webcam. Sit about an arm's length from the screen, in good light, and keep your head still. The camera is used only for this test.</p>
+      <div class="note">A webcam records far fewer eye samples than the research trackers this model was trained on, so this result is shown but not counted in the final recommendation.</div>
+      <div class="row"><button id="eye-start">Start the eye test</button><button class="link" id="eye-skip">Skip</button></div>
+      <p class="muted small" id="eye-msg" aria-live="polite"></p><div class="result" id="res-eye" hidden></div>
+      <div class="row"><span class="spacer"></span><button class="secondary" id="eye-next" hidden>Next: speech →</button></div>
+    </div>
+
+    <div class="card step-panel" id="step-speech" hidden>
+      <h2>4 · Speech <span class="tag exp">Experimental · not counted</span></h2>
+      <p class="muted">Look at the picture and describe everything that is happening in it, in as much detail as you can. You have one minute.</p>
+      <div id="picture-slot"></div>
+      <div class="row"><button id="speech-start">Start speaking (60 s)</button><button class="secondary" id="speech-stop" hidden>Finish early</button><button class="link" id="speech-skip">Skip</button></div>
+      <p class="muted small" id="speech-msg" aria-live="polite"></p><div class="result" id="res-speech" hidden></div>
+      <div class="row"><span class="spacer"></span><button class="secondary" id="speech-next" hidden>See my results →</button></div>
+    </div>
+
+    <div class="card step-panel" id="step-final" hidden>
+      <h2>Your results</h2>
+      <div id="final-wait" class="muted"><span class="spinner"></span><span id="final-msg">Writing your summary…</span></div>
+      <div id="final-body" hidden></div>
+    </div>
+  </section>
+
+  <!-- doctor -->
+  <section class="view" id="view-doctor" hidden>
+    <div class="card" id="doc-login">
+      <h2>Doctor login</h2>
+      <form id="login-form"><div class="grid"><div><label for="d-user">Username</label><input id="d-user" autocomplete="username" required></div>
+        <div><label for="d-pass">Password</label><input id="d-pass" type="password" autocomplete="current-password" required></div></div>
+        <p class="muted small" id="login-msg" role="alert"></p><div class="row"><button type="submit">Log in</button></div></form>
+    </div>
+    <div id="doc-main" hidden>
+      <div class="card"><h2>Find a patient</h2>
+        <form id="search-form" class="row"><input id="d-q" placeholder="Name or patient ID (e.g. AD-123456)" style="flex:1;min-width:220px" required><button type="submit">Search</button></form>
+        <div id="hits"></div></div>
+      <div id="record"></div>
+    </div>
   </section>
 </main>
 
 <script>
 const ORDER = ["clock", "motor", "eye", "speech"];
 const NAMES = { clock: "Clock drawing", motor: "Finger tapping", eye: "Eye movement", speech: "Speech" };
-const results = {}, extras = {}, blank = {};
-const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
-const $ = id => document.getElementById(id);
 const TAGS = { flagged: "Flagged", not_flagged: "Not flagged", not_run: "Not run" };
-
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 async function post(url, data) {
   const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-  return res.json();
+  const j = await res.json().catch(() => ({ error: "bad reply" }));
+  if (!res.ok || j.error) throw new Error(j.error || res.statusText);
+  return j;
 }
 const b64 = async blob => { const bytes = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (let i = 0; i < bytes.length; i += 32768) s += String.fromCharCode(...bytes.subarray(i, i + 32768)); return btoa(s); };
+const pretty = v => Array.isArray(v) ? (v.join(", ") || "none") : (v && typeof v === "object" ? Object.entries(v).map(e => e.join(": ")).join(", ") : v);
 
-function renderProgress() {
-  const p = $("progress"); p.replaceChildren();
-  const done = ORDER.filter(m => results[m].status !== "not_run").length;
-  p.append(el("span", "muted", done + " of 4 screens done:"));
-  ORDER.forEach(m => p.append(el("span", "tag " + results[m].status, NAMES[m] + " – " + TAGS[results[m].status])));
-}
+/* ---------- views ---------- */
+function show(view) { ["landing", "patient", "doctor"].forEach(v => { $("view-" + v).hidden = v !== view; }); window.scrollTo(0, 0); }
+$("brand").onclick = () => { if (!$("view-patient").hidden && patient.code && !confirm("Leave? Unsaved results will be lost.")) return; location.reload(); };
+$("brand").onkeydown = e => { if (e.key === "Enter") $("brand").onclick(); };
+$("go-patient").onclick = () => { show("patient"); setStep("details"); };
+$("go-doctor").onclick = () => show("doctor");
 
-function renderCard(m) {
-  const r = results[m], card = $("card-" + m), body = card.querySelector(".body"), x = extras[m] || {};
-  body.replaceChildren();
-  card.querySelector(".tag-slot").replaceChildren(el("span", "tag " + r.status, TAGS[r.status]));
-  if (r.status !== "not_run" || r.measured && Object.keys(r.measured).length) body.append(el("p", "", r.label));
+/* ---------- result rendering (shared by patient steps and the doctor view) ---------- */
+function resultBlock(r, extra = {}) {
+  const box = el("div");
+  const head = el("div", "row"); head.append(el("span", "tag " + r.status, TAGS[r.status]), el("b", "", r.label || ""));
+  box.append(head);
   const keys = Object.keys(r.measured || {});
-  if (keys.length) {
-    const dl = el("dl");
-    keys.forEach(k => { const v = r.measured[k]; dl.append(el("dt", "", k), el("dd", "", Array.isArray(v) ? (v.join(", ") || "none") : (typeof v === "object" ? Object.entries(v).map(e => e.join(": ")).join(", ") : v))); });
-    body.append(dl);
-  }
-  if (x.preview) { const row = el("div", "row"); const img = el("img", "preview"); img.src = "data:image/png;base64," + x.preview; img.alt = "The drawing as the model saw it (cropped)"; row.append(img, el("span", "muted", "The drawing as the model saw it, after cleaning and cropping.")); body.append(row); }
-  if (x.transcript) { const d = el("details"); d.append(el("summary", "", "What the computer heard (shown here only, not saved)"), el("div", "transcript", x.transcript)); body.append(d); }
-  body.append(el("p", "muted", "Evidence: " + r.evidence), el("p", "muted caveat", "Limits: " + r.caveat));
-  renderProgress();
+  if (keys.length) { const dl = el("dl"); keys.forEach(k => dl.append(el("dt", "", k), el("dd", "", pretty(r.measured[k])))); box.append(dl); }
+  if (extra.preview) { const img = el("img", "preview"); img.src = "data:image/png;base64," + extra.preview; img.alt = "The drawing as the model saw it"; box.append(img); }
+  if (r.evidence) box.append(el("p", "muted small", "Evidence: " + r.evidence));
+  if (r.caveat) box.append(el("p", "muted small", "Limits: " + r.caveat));
+  return box;
 }
 
-function setResult(m, r, extra) {
-  const { preview, transcript, ...clean } = r;     // images/transcripts stay in the page; only the plain result goes to the summary
-  results[m] = clean; extras[m] = { preview, transcript, ...extra };
-  renderCard(m);
+/* ---------- patient state & stepper ---------- */
+const STEPS = [["details", "About you"], ["clock", "Clock"], ["motor", "Tapping"], ["eye", "Eyes"], ["speech", "Speech"], ["final", "Results"]];
+const patient = { code: null, name: "", age: 70, q: {} };
+const results = {}, extras = {}; let clockJpeg = null;
+function setStep(id) {
+  STEPS.forEach(([s]) => { $("step-" + s).hidden = s !== id; });
+  const idx = STEPS.findIndex(s => s[0] === id), st = $("stepper"); st.replaceChildren();
+  STEPS.forEach(([, label], i) => { const d = el("div", "s" + (i < idx ? " done" : i === idx ? " now" : "")); d.append(el("div", "bar"), el("span", "", label)); st.append(d); });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (id === "speech") loadPicture();
+  if (id === "final") finish();
 }
+function setResult(m, r) {
+  const { preview, transcript, ...clean } = r; results[m] = clean; extras[m] = { preview };
+  const box = $("res-" + m); box.replaceChildren(resultBlock(clean, { preview })); box.hidden = false;
+  $(m + "-next").hidden = false;
+}
+const next = { clock: "motor", motor: "eye", eye: "speech", speech: "final" };
+ORDER.forEach(m => { $(m + "-next").onclick = () => setStep(next[m]); });
+$("eye-skip").onclick = () => setStep("speech"); $("speech-skip").onclick = () => setStep("final");
 
-/* ---------- clock ---------- */
-function buildClock(card) {
-  const host = card.querySelector(".extra");
-  host.append(el("p", "muted", "Ask the person to draw an analog clock showing 11:10 on white paper. Then upload a flat, well-lit photo or scan of it. The picture is processed on this computer and not saved."));
-  const file = el("input"); file.type = "file"; file.accept = "image/*"; file.setAttribute("aria-label", "Photo or scan of the clock drawing");
-  const msg = el("p", "muted"); msg.setAttribute("aria-live", "polite");
-  host.append(file, msg);
-  file.onchange = async () => {
-    if (!file.files[0]) return;
-    msg.textContent = "Analysing… (the first picture takes a few seconds longer)";
+/* ---------- questionnaire ---------- */
+$("q-form").onsubmit = async e => {
+  e.preventDefault(); const btn = $("q-submit"); btn.disabled = true;
+  const v = id => $(id).value.trim(); const q = {};
+  [["age", "q-age"], ["gender", "q-gender"], ["ethnicity", "q-eth"], ["education", "q-edu"], ["systolic_bp", "q-sys"], ["diastolic_bp", "q-dia"], ["diabetes", "q-diab"],
+   ["high_blood_pressure", "q-htn"], ["high_cholesterol", "q-chol"], ["family_history_dementia", "q-fam"], ["smoking", "q-smoke"], ["head_injury", "q-head"],
+   ["hearing_loss", "q-hear"], ["depression", "q-dep"], ["physical_activity", "q-act"]].forEach(([k, id]) => { if (v(id)) q[k] = v(id); });
+  try {
+    const { code } = await post("/api/patient", { name: v("q-name"), questionnaire: q });
+    Object.assign(patient, { code, name: v("q-name"), age: Number(v("q-age")), q }); setStep("clock");
+  } catch (err) { alert("Could not save your details: " + err.message); }
+  btn.disabled = false;
+};
+
+/* ---------- clock: draw with the mouse, send as JPEG ---------- */
+(() => {
+  const cv = $("clock-canvas"), ctx = cv.getContext("2d"); let drawing = false, last = null, inked = false;
+  const wipe = () => { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height); ctx.lineWidth = 5; ctx.lineCap = ctx.lineJoin = "round"; ctx.strokeStyle = "#000"; inked = false; };
+  wipe();
+  const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  cv.onpointerdown = e => { drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(last[0] + .1, last[1]); ctx.stroke(); inked = true; };
+  cv.onpointermove = e => { if (!drawing) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p; };
+  cv.onpointerup = cv.onpointercancel = () => { drawing = false; };
+  $("clock-clear").onclick = wipe;
+  $("clock-done").onclick = async () => {
+    const msg = $("clock-msg"), btn = $("clock-done");
+    if (!inked) { msg.textContent = "Please draw the clock first."; return; }
+    btn.disabled = true; msg.innerHTML = ""; msg.append(el("span", "spinner"), "Checking the drawing… (the first time takes a few seconds longer)");
     try {
-      const r = await post("/api/clock", { image: await b64(file.files[0]) });
-      if (r.error) throw new Error(r.error);
-      msg.textContent = r.status === "not_run" ? "That picture could not be read. Try a clearer photo." : "";
+      const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", .92)); clockJpeg = await b64(blob);
+      const r = await post("/api/clock", { image: clockJpeg });
+      msg.textContent = r.status === "not_run" ? "That drawing could not be read. Clear it and draw a little larger and darker." : "";
       setResult("clock", r);
-    } catch (e) { msg.textContent = "Could not analyse: " + e.message; }
-  };
-}
-
-/* ---------- motor ---------- */
-function buildMotor(card) {
-  const host = card.querySelector(".extra");
-  host.append(el("p", "muted", "Use the dominant hand. Tap the button below with one finger, as fast as you can, for 30 seconds. You get a 3 second countdown."));
-  const age = el("input"); age.type = "number"; age.min = 18; age.max = 110; age.value = 70; age.id = "age";
-  const lab = el("label", "", "Age: "); lab.htmlFor = "age";
-  const start = el("button", "", "Start the test");
-  const timer = el("div"); timer.id = "timer"; timer.setAttribute("aria-live", "polite");
-  const tap = el("button", "secondary", "Tap here"); tap.id = "tap"; tap.disabled = true;
-  const row = el("div", "row"); row.append(lab, age, start);
-  host.append(row, timer, tap);
-  start.onclick = () => {
-    start.disabled = true; let n = 3; timer.textContent = n;
-    const cd = setInterval(() => { n--; if (n > 0) { timer.textContent = n; return; } clearInterval(cd); runTrial(Number(age.value), timer, tap, start); }, 1000);
-  };
-}
-function runTrial(age, timer, tap, start) {
-  const taps = []; const t0 = performance.now(); tap.disabled = false; tap.focus();
-  const on = () => taps.push((performance.now() - t0) / 1000);
-  tap.addEventListener("pointerdown", on);
-  const tick = setInterval(async () => {
-    const left = 30 - (performance.now() - t0) / 1000;
-    timer.textContent = Math.max(0, left).toFixed(0) + " s";
-    if (left > 0) return;
-    clearInterval(tick); tap.disabled = true; tap.removeEventListener("pointerdown", on); timer.textContent = "Done";
-    setResult("motor", await post("/api/motor", { taps: taps.filter(t => t <= 30), age }));
-    start.disabled = false; start.textContent = "Repeat the test";
-  }, 200);
-}
-
-/* ---------- eye (experimental) ---------- */
-function buildEye(card) {
-  const host = card.querySelector(".extra");
-  host.append(el("p", "muted caveat", "EXPERIMENTAL. A webcam cannot record what the model was trained on, so this result is shown but not counted in the follow-up rule. About 1 minute. Sit about an arm's length from the screen in good light and keep your head still. The camera is used only here; nothing is saved or sent anywhere."));
-  const btn = el("button", "", "Start the eye test"), msg = el("p", "muted"); msg.setAttribute("aria-live", "polite");
-  host.append(btn, msg);
-  btn.onclick = async () => {
-    btn.disabled = true;
-    try {
-      const { startEyeTest } = await import("/static/eye.js");
-      await startEyeTest(async (tasks, cal) => { setResult("eye", await post("/api/eye", { tasks, calibration: cal })); }, t => { msg.textContent = t; });
-    } catch (e) { msg.textContent = "Could not start the camera test: " + (e.name === "NotAllowedError" ? "camera permission was denied." : e.message); }
+    } catch (e) { msg.textContent = "Could not check the drawing: " + e.message; }
     btn.disabled = false;
   };
-}
+})();
 
-/* ---------- speech (experimental) ---------- */
-function buildSpeech(card) {
-  const host = card.querySelector(".extra");
-  host.append(el("p", "muted caveat", "EXPERIMENTAL, shown but not counted in the follow-up rule. Speak for one minute: “Describe everything that is happening in a busy family kitchen, in as much detail as you can.” The recording stays on this computer and is not saved. The first use downloads a speech model (about 460 MB) once."));
-  const btn = el("button", "", "Start recording (60 s)"), stop = el("button", "secondary", "Stop early"), msg = el("p", "muted");
-  stop.hidden = true; msg.setAttribute("aria-live", "polite");
-  const row = el("div", "row"); row.append(btn, stop); host.append(row, msg);
-  btn.onclick = async () => {
-    btn.disabled = true;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream), chunks = [];
-      rec.ondataavailable = e => chunks.push(e.data);
-      const stopped = new Promise(r => { rec.onstop = r; });
-      rec.start(); let left = 60; stop.hidden = false; stop.onclick = () => rec.state === "recording" && rec.stop();
-      const tick = setInterval(() => { left--; msg.textContent = "Recording… " + left + " s left"; if (left <= 0 && rec.state === "recording") rec.stop(); }, 1000);
-      await stopped; clearInterval(tick); stop.hidden = true; stream.getTracks().forEach(t => t.stop());
-      const t0 = performance.now(), wait = setInterval(() => { msg.textContent = "Analysing… " + Math.round((performance.now() - t0) / 1000) + " s (the first time can take a few minutes)"; }, 1000);
-      const r = await post("/api/speech", { audio: await b64(new Blob(chunks)) });
-      clearInterval(wait);
-      if (r.error) throw new Error(r.error);
-      msg.textContent = ""; setResult("speech", r);
-    } catch (e) { msg.textContent = "Could not run the speech test: " + (e.name === "NotAllowedError" ? "microphone permission was denied." : e.message); }
-    btn.disabled = false; stop.hidden = true;
+/* ---------- motor ---------- */
+(() => {
+  const timer = $("timer"), tap = $("tap"), start = $("motor-start");
+  start.onclick = () => {
+    start.disabled = true; let n = 3; timer.textContent = n;
+    const cd = setInterval(() => { n--; if (n > 0) { timer.textContent = n; return; } clearInterval(cd); run(); }, 1000);
   };
-}
-
-/* ---------- overall ---------- */
-let sumText = "";
-$("sum-btn").onclick = async () => {
-  const btn = $("sum-btn"), st = $("sum-status"), out = $("overall"); btn.disabled = true; out.replaceChildren();
-  const t0 = performance.now(), tick = setInterval(() => { st.textContent = "Writing… " + Math.round((performance.now() - t0) / 1000) + " s (can take up to 2 minutes on this computer)"; }, 1000);
-  try {
-    const data = await post("/api/summary", { results: ORDER.map(m => results[m]) });
-    out.append(el("p", "overall-text", data.combined.text));
-    const wrap = el("div", "sumpara"); ORDER.forEach(m => { wrap.append(el("h3", "", NAMES[m]), el("p", "", data.summary.modalities[m])); }); out.append(wrap);
-    const src = data.summary.source === "template" ? "fixed template" + (data.summary.note ? " (" + data.summary.note + ")" : "") : "local model " + data.summary.source + ", checked against the results";
-    out.append(el("p", "muted", "Written by: " + src));
-    sumText = data.combined.text + "\n\n" + ORDER.map(m => NAMES[m] + ": " + data.summary.modalities[m]).join("\n\n");
-    $("copy-btn").hidden = false; $("print-btn").hidden = false;
-  } catch (e) { out.append(el("p", "", "Could not write the summary: " + e.message)); }
-  clearInterval(tick); st.textContent = ""; btn.disabled = false;
-};
-$("copy-btn").onclick = async () => { try { await navigator.clipboard.writeText(sumText); $("sum-status").textContent = "Copied."; } catch { $("sum-status").textContent = "Copy failed; select the text instead."; } };
-$("print-btn").onclick = () => window.print();
-$("reset-btn").onclick = () => { if (confirm("Clear all results on this page and start over?")) location.reload(); };
-
-/* ---------- start-up ---------- */
-(async () => {
-  const [ev, st] = await Promise.all([fetch("/api/evidence").then(r => r.json()), fetch("/api/status").then(r => r.json()).catch(() => null)]);
-  const host = $("cards");
-  ORDER.forEach((m, i) => {
-    blank[m] = ev.not_run[m]; results[m] = ev.not_run[m];
-    const card = el("section", "card"); card.id = "card-" + m;
-    const head = el("div", "head"); head.append(el("span", "num", String(i + 1)), el("h2", "", NAMES[m]), el("span", "tag-slot"));
-    if (m === "eye" || m === "speech") head.append(el("span", "tag exp", "Experimental · not counted"));
-    card.append(head, el("div", "extra"), el("div", "body"));
-    host.append(card);
-    ({ clock: buildClock, motor: buildMotor, eye: buildEye, speech: buildSpeech })[m](card);
-    renderCard(m);
-  });
-  if (st) {
-    const notes = [];
-    for (const [m, files] of Object.entries(st.missing_files)) notes.push(NAMES[m] + " is unavailable: missing " + files.join(", ") + " in models/.");
-    if (!st.vendor) notes.push("The eye test is unavailable: the MediaPipe files in app/static/vendor/ are missing.");
-    if (!st.ollama.running) notes.push("Ollama is not running, so the summary will use a fixed template.");
-    else if (!st.ollama.model) notes.push("The summary model is not installed (run: ollama pull llama3.1:8b); the summary will use a fixed template.");
-    if (notes.length) { const b = el("div", "banner"); b.setAttribute("role", "status"); notes.forEach(n => b.append(el("p", "", n))); $("banner").append(b); }
+  function run() {
+    const taps = [], t0 = performance.now(); tap.disabled = false; tap.focus(); tap.classList.remove("secondary");
+    const on = () => taps.push((performance.now() - t0) / 1000); tap.addEventListener("pointerdown", on);
+    const tick = setInterval(async () => {
+      const left = 30 - (performance.now() - t0) / 1000; timer.textContent = Math.max(0, Math.ceil(left)) + " s";
+      if (left > 0) return;
+      clearInterval(tick); tap.disabled = true; tap.classList.add("secondary"); tap.removeEventListener("pointerdown", on); timer.textContent = "Done";
+      try { setResult("motor", await post("/api/motor", { taps: taps.filter(t => t <= 30), age: patient.age })); } catch (e) { timer.textContent = "Could not score: " + e.message; }
+      start.disabled = false; start.textContent = "Repeat";
+    }, 200);
   }
 })();
+
+/* ---------- eye ---------- */
+$("eye-start").onclick = async () => {
+  const btn = $("eye-start"), msg = $("eye-msg"); btn.disabled = true;
+  try {
+    const { startEyeTest } = await import("/static/eye.js");
+    await startEyeTest(async (tasks, cal) => { setResult("eye", await post("/api/eye", { tasks, calibration: cal })); }, t => { msg.textContent = t; });
+  } catch (e) { msg.textContent = "Could not start the camera test: " + (e.name === "NotAllowedError" ? "camera permission was denied." : e.message); }
+  btn.disabled = false;
+};
+
+/* ---------- speech ---------- */
+function loadPicture() {
+  const slot = $("picture-slot"); if (slot.childElementCount) return;
+  const img = el("img", "picture"); img.alt = "Picture to describe"; const tries = ["/static/cookie_theft.jpg", "/static/cookie_theft.png"];
+  img.onerror = () => { const t = tries.shift(); if (t) img.src = t; else slot.replaceChildren(el("div", "placeholder", "The picture file is missing. Put it at app/static/cookie_theft.jpg and reload.")); };
+  img.onerror();
+  slot.append(img);
+}
+$("speech-start").onclick = async () => {
+  const btn = $("speech-start"), stop = $("speech-stop"), msg = $("speech-msg"); btn.disabled = true;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const rec = new MediaRecorder(stream), chunks = []; rec.ondataavailable = e => chunks.push(e.data);
+    const stopped = new Promise(r => { rec.onstop = r; });
+    rec.start(); let left = 60; stop.hidden = false; stop.onclick = () => rec.state === "recording" && rec.stop(); msg.textContent = "Recording… 60 s left";
+    const tick = setInterval(() => { left--; msg.textContent = "Recording… " + left + " s left"; if (left <= 0 && rec.state === "recording") rec.stop(); }, 1000);
+    await stopped; clearInterval(tick); stop.hidden = true; stream.getTracks().forEach(t => t.stop());
+    msg.innerHTML = ""; msg.append(el("span", "spinner"), "Analysing your speech… (the first time can take a few minutes)");
+    setResult("speech", await post("/api/speech", { audio: await b64(new Blob(chunks)) })); msg.textContent = "";
+  } catch (e) { msg.textContent = "Could not run the speech test: " + (e.name === "NotAllowedError" ? "microphone permission was denied." : e.message); }
+  btn.disabled = false; stop.hidden = true;
+};
+
+/* ---------- final: summary + save ---------- */
+async function finish() {
+  const wait = $("final-wait"), body = $("final-body"), msg = $("final-msg"); body.replaceChildren(); body.hidden = true; wait.hidden = false;
+  const all = ORDER.map(m => results[m] || { modality: m, status: "not_run", label: NAMES[m] + ": not run", measured: {}, evidence: "", caveat: "" });
+  const t0 = performance.now(), tick = setInterval(() => { msg.textContent = "Writing your summary… " + Math.round((performance.now() - t0) / 1000) + " s (up to 2 minutes)"; }, 1000);
+  let data = null, saved = "";
+  try { data = await post("/api/summary", { results: all }); } catch (e) { body.append(el("div", "note", "Could not write the summary: " + e.message)); }
+  try { const s = await post("/api/save", { code: patient.code, results: all, combined: data && data.combined, summary: data && data.summary, clock_jpeg: clockJpeg }); saved = "Saved to " + s.where + "."; }
+  catch (e) { saved = "Could NOT be saved: " + e.message; }
+  clearInterval(tick); wait.hidden = true; body.hidden = false;
+  const id = el("p"); id.append("Your patient ID: ", el("span", "code", patient.code)); body.prepend(id, el("p", "muted small", saved + " Give this ID to your doctor."));
+  if (data) {
+    body.append(el("div", "overall" + (data.combined.follow_up ? " follow" : ""), data.combined.text));
+    const wrap = el("div", "sumpara"); ORDER.forEach(m => wrap.append(el("h3", "", NAMES[m]), el("p", "", data.summary.modalities[m]))); body.append(wrap);
+    body.append(el("p", "muted small", "This is a screening aid, not a diagnosis. " + (data.summary.source === "template" ? "Summary written from a fixed template." : "Summary written by a local language model and checked against the results.")));
+  }
+  const row = el("div", "row"), pr = el("button", "secondary", "Print"), again = el("button", "", "Finish"); pr.onclick = () => window.print(); again.onclick = () => location.reload(); row.append(pr, el("span", "spacer"), again); body.append(row);
+}
+
+/* ---------- doctor ---------- */
+let token = null;
+$("login-form").onsubmit = async e => {
+  e.preventDefault(); $("login-msg").textContent = "";
+  try { token = (await post("/api/doctor/login", { user: $("d-user").value, password: $("d-pass").value })).token; $("doc-login").hidden = true; $("doc-main").hidden = false; $("d-q").focus(); }
+  catch (err) { $("login-msg").textContent = err.message; }
+};
+$("search-form").onsubmit = async e => {
+  e.preventDefault(); const hits = $("hits"); hits.replaceChildren(el("p", "muted", "Searching…")); $("record").replaceChildren();
+  try {
+    const { patients } = await post("/api/doctor/search", { token, q: $("d-q").value }); hits.replaceChildren();
+    if (!patients.length) hits.append(el("p", "muted", "No patient found."));
+    patients.forEach(p => { const b = el("button", "hit"); b.append(el("b", "", p.name), el("span", "muted", p.code)); b.onclick = () => openRecord(p.code); hits.append(b); });
+    if (patients.length === 1) openRecord(patients[0].code);
+  } catch (err) { hits.replaceChildren(el("p", "muted", err.message)); }
+};
+const QLABEL = { age: "Age", gender: "Gender", ethnicity: "Ethnicity", education: "Education", systolic_bp: "Blood pressure, systolic", diastolic_bp: "Blood pressure, diastolic", diabetes: "Diabetes",
+  high_blood_pressure: "High blood pressure", high_cholesterol: "High cholesterol", family_history_dementia: "Family history of dementia", smoking: "Smoking", head_injury: "Serious head injury",
+  hearing_loss: "Hearing loss", depression: "Depression / low mood", physical_activity: "Physical activity" };
+async function openRecord(code) {
+  const box = $("record"); box.replaceChildren(el("p", "muted", "Loading…"));
+  try {
+    const { patient: p, screenings } = await post("/api/doctor/record", { token, code }); box.replaceChildren();
+    const info = el("div", "card"); info.append(el("h2", "", p.name), el("p", "muted", "Patient ID " + p.code + " · registered " + (p.created_at || "").slice(0, 10)));
+    const t = el("table"); Object.entries(p.questionnaire || {}).forEach(([k, v]) => { const tr = el("tr"); tr.append(el("th", "", QLABEL[k] || k), el("td", "", v)); t.append(tr); });
+    info.append(el("p", "muted small", "Questionnaire answers are context only; they did not change any result."), t); box.append(info);
+    if (!screenings.length) { box.append(el("div", "card muted", "No screening has been completed yet.")); return; }
+    screenings.forEach((s, i) => {
+      const c = el("div", "card"); c.append(el("h2", "", "Screening " + (screenings.length - i) + " · " + (s.created_at || "").slice(0, 16).replace("T", " ")));
+      if (s.combined) c.append(el("div", "overall" + (s.combined.follow_up ? " follow" : ""), s.combined.text));
+      (s.results || []).forEach(r => { const sec = el("div", "result"); sec.append(el("h3", "", NAMES[r.modality])); sec.append(resultBlock(r));
+        if (r.modality === "clock" && s.clock_jpeg) { const im = el("img", "preview"); im.src = "data:image/jpeg;base64," + s.clock_jpeg; im.alt = "The patient's clock drawing"; sec.append(el("p", "muted small", "Drawing as submitted:"), im); }
+        c.append(sec); });
+      if (s.summary && s.summary.modalities) { const w = el("div", "result sumpara"); w.append(el("h3", "", "Written summary")); ORDER.forEach(m => w.append(el("p", "", NAMES[m] + ": " + s.summary.modalities[m]))); c.append(w); }
+      box.append(c);
+    });
+  } catch (err) { box.replaceChildren(el("p", "muted", err.message)); }
+}
+
+/* ---------- start-up banner ---------- */
+fetch("/api/status").then(r => r.json()).then(st => {
+  const notes = [];
+  for (const [m, files] of Object.entries(st.missing_files)) notes.push(NAMES[m] + " is unavailable: missing " + files.join(", ") + " in models/.");
+  if (!st.vendor) notes.push("The eye test is unavailable: the MediaPipe files in app/static/vendor/ are missing.");
+  if (!st.ollama.running) notes.push("Ollama is not running, so the summary will use a fixed template.");
+  else if (!st.ollama.model) notes.push("Summary model not installed (ollama pull llama3.1:8b); a fixed template will be used.");
+  if (st.storage !== "Supabase") notes.push("Supabase is not configured, so records are saved only in a local file (see supabase/SETUP.md).");
+  if (!st.cookie_picture) notes.push("The Cookie Theft picture is missing: add app/static/cookie_theft.jpg.");
+  if (notes.length) { const b = el("div", "note"); b.setAttribute("role", "status"); notes.forEach(n => b.append(el("p", "small", n))); $("banner").append(b); }
+}).catch(() => {});
 </script>
 </body>
 </html>

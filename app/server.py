@@ -1,14 +1,14 @@
 """Local app server (standard library only). Run from the repo root:  python -m app.server   then open http://127.0.0.1:8765
 
-Everything stays on this machine: no result is uploaded and no name is stored. Results live in the browser page until it is closed.
-Clock takes an uploaded photo (app/clock.py). Eye / Speech capture is not wired; they are reported as 'not run' (see app/runners.py)."""
+Patients and screenings are saved through app/store.py (Supabase if configured in .env, else data/local_store.json); the doctor view needs the
+doctor login. Models run on this machine. Clock takes a JPEG of the drawing (drawn on screen or uploaded)."""
 import base64
 import json
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import motor
+from . import motor, store
 from .combine import combine
 from .evidence import CAVEAT, EVIDENCE
 from .schema import ORDER, Result
@@ -43,12 +43,38 @@ def status():
             ollama = {"running": True, "model": any(m["name"].startswith("llama3.1:8b") for m in json.load(r)["models"])}
     except Exception:
         pass
-    return {"missing_files": {m: f for m, f in files.items() if f}, "ollama": ollama,
+    return {"missing_files": {m: f for m, f in files.items() if f}, "ollama": ollama, "storage": db().name,
+            "cookie_picture": any((STATIC / ("cookie_theft" + e)).exists() for e in (".jpg", ".png")),
             "vendor": (STATIC / "vendor" / "face_landmarker.task").exists()}
+
+
+DB = None
+
+
+def db():
+    global DB
+    DB = DB or store.backend()
+    return DB
 
 
 def handle(path, body):
     """Pure routing function (testable without sockets). Returns (status, dict)."""
+    if path == "/api/patient":
+        return 200, {"code": store.create_patient(db(), body.get("name"), body.get("questionnaire", {}))}
+    if path == "/api/save":
+        store.save_screening(db(), body["code"], body["results"], body.get("combined"), body.get("summary"), body.get("clock_jpeg"))
+        return 200, {"saved": True, "where": db().name}
+    if path == "/api/doctor/login":
+        t = store.doctor_login(str(body.get("user", "")), str(body.get("password", "")))
+        return (200, {"token": t}) if t else (401, {"error": "wrong username or password, or no doctor account set in .env"})
+    if path.startswith("/api/doctor/"):
+        if not store.doctor_ok(body.get("token")):
+            return 401, {"error": "please log in again"}
+        if path == "/api/doctor/search":
+            return 200, {"patients": db().search(str(body.get("q", "")))}
+        if path == "/api/doctor/record":
+            p, s = db().record(str(body.get("code", "")))
+            return (200, {"patient": p, "screenings": s}) if p else (404, {"error": "no such patient"})
     if path == "/api/evidence":
         return 200, {"order": list(ORDER), "not_run": {m: not_run(m).to_dict() for m in ORDER}}
     if path == "/api/status":
@@ -95,6 +121,8 @@ class H(BaseHTTPRequestHandler):
             self._send(*handle(self.path, body))
         except (KeyError, ValueError) as e:
             self._send(400, {"error": f"bad request: {e}"})
+        except RuntimeError as e:   # storage failure (e.g. Supabase rejected the request)
+            self._send(502, {"error": str(e)})
 
     def log_message(self, *a):   # no request log: nothing about the person is written anywhere
         pass

@@ -228,16 +228,16 @@ class SummaryOverall(unittest.TestCase):
 class Status(unittest.TestCase):
     def test_status_shape(self):
         code, d = handle("/api/status", {})
-        self.assertEqual(code, 200); self.assertEqual(set(d), {"missing_files", "ollama", "vendor"})
+        self.assertEqual(code, 200); self.assertEqual(set(d), {"missing_files", "ollama", "vendor", "storage", "cookie_picture"})
         self.assertEqual(set(d["ollama"]), {"running", "model"})
 
-    def test_page_has_four_cards_in_order(self):
+    def test_page_has_four_steps_in_order(self):
         from pathlib import Path
         html = (Path(__file__).resolve().parent.parent / "app" / "static" / "index.html").read_text(encoding="utf-8")
         i = html.index('const ORDER = ["clock", "motor", "eye", "speech"]')
         self.assertGreater(i, 0)
-        for fn in ("buildClock", "buildMotor", "buildEye", "buildSpeech"):
-            self.assertIn("function " + fn, html)
+        steps = [html.index('id="step-' + m) for m in ("clock", "motor", "eye", "speech")]
+        self.assertEqual(steps, sorted(steps))   # patient steps appear in the order Clock > Motor > Eye > Speech
 
 
 if __name__ == "__main__":

@@ -663,3 +663,13 @@ Ollama 0.40.6 + `llama3.1:8b` installed; summary works (38-90 s on CPU) and fall
 **Resume here (device test):** run `run_app.bat` (Python 3.13), check the banner is empty, then try: clock photo upload, 30 s tapping, eye test (webcam - never run on
 real hardware), speech 60 s (microphone - never run; Whisper small is cached), then "Write the summary". Send back any error text (F12 > Console).
 **Still unvalidated:** clock on photos (only a synthetic drawing was tried); eye and speech on live devices; all domain shift (rule 7). Crop-Net did not learn (FINDINGS 3f).
+
+---
+
+## 2026-10-18 (new patient/doctor app flow)
+
+**Asked (user):** landing page with Patient / Doctor; patient: questionnaire (name, ethnicity, BP, diabetes, gender, risk factors) -> clock drawn with the mouse -> motor -> eye -> speech with the Cookie Theft picture -> LLM summary; everything stored in Supabase; doctor logs in, searches by name/ID, reviews. Smooth, aesthetic UI.
+**Decided (user):** simple doctor login (not high security); clock drawn on a canvas, saved as JPEG and sent through the existing clock pipeline; Cookie Theft picture; Supabase setup steps wanted (no project yet).
+**Changed:** `app/store.py` (Supabase REST via server-side service key in `.env`, else `data/local_store.json`; doctor login from `.env`), routes `/api/patient`, `/api/save`, `/api/doctor/{login,search,record}` in `server.py`, `index.html` rewritten (landing, stepper, questionnaire, canvas clock, doctor view), `supabase/schema.sql` + `SETUP.md` (RLS on, no public policies), `.gitignore` (.env, data/, NHATS per-image CSVs), `tests/test_store.py` (3), `test_app.py` updated. App tests pass (34).
+**Rules kept:** questionnaire answers are stored and shown only; they never change a result (no fusion). Summary wording still "follow-up recommended", no diagnosis. Eye/speech still not counted.
+**Open:** (1) mouse-drawn clock is a different input from the NHATS photos the model was trained on: unvalidated, domain shift (rule 7). (2) Cookie Theft image file not in repo: user must add `app/static/cookie_theft.jpg` and confirm they may display it. (3) Supabase project + `.env` not yet created. (4) Page never viewed in a browser by me (Chrome extension not connected); webcam/mic untested. (5) EVIDENCE/CAVEAT text for clock should mention mouse input.
