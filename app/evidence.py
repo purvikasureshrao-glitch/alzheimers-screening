@@ -13,7 +13,7 @@ EVIDENCE = {
 }
 
 CAVEAT = {
-    "clock": "Trained on NHATS scanned drawings; photos of paper drawings are an unvalidated domain shift. The cropping step did not learn well (FINDINGS 3e).",
+    "clock": "Trained on NHATS scanned drawings; photos of paper drawings, and drawings made with a mouse on screen, are unvalidated domain shifts. The cropping step did not learn well (FINDINGS 3e).",
     "motor": "Not an Alzheimer's detector. The reference group is younger (median age 30), used a touchscreen, and contains few adults over 50.",
     "eye": ("EXPERIMENTAL, not counted in the 2-of-4 rule. The model was trained on a ~333 Hz research tracker (about 0.3 s per task, "
             "unknown screen units); a ~30 Hz webcam gives about 9 gaze points per task and cannot reproduce the saccade or left/right-eye "
