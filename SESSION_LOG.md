@@ -651,3 +651,15 @@ Copy / Print / Start over buttons, print stylesheet, dark mode, aria-live messag
 **Also:** `run_app.bat` (Python 3.13, opens the browser), `requirements-local.txt` updated, `clock.analyse`, `speech.analyse`, `eye.score(calibration_pct)`.
 **Tested:** 31 tests pass; page and eye.js JavaScript syntax-checked with node. **Not tested:** the page in a real browser (Chrome extension not connected), webcam, microphone.
 **Next:** device test together; commit.
+
+---
+
+## 2026-10-18 (end of session: committed, resume point)
+
+**Committed:** `e7798ba` (clock, eye, speech paths; Ollama summary fix; frontend; docs). Not pushed. Left untracked on purpose: `output/*.zip` (backups; models are
+already in `models/`) and the per-image NHATS files `results/split.csv`, `clock_test_preds.csv`, `crop_qc.csv` (participant-level; add to `.gitignore` before any push).
+**State:** all four modalities have an app path. Counted in the 2-of-4 rule: Clock, Motor. Shown but not counted: Eye (webcam, experimental), Speech (Whisper, experimental).
+Ollama 0.40.6 + `llama3.1:8b` installed; summary works (38-90 s on CPU) and falls back to a fixed template if the model is off or breaks a rule. 31 tests pass.
+**Resume here (device test):** run `run_app.bat` (Python 3.13), check the banner is empty, then try: clock photo upload, 30 s tapping, eye test (webcam - never run on
+real hardware), speech 60 s (microphone - never run; Whisper small is cached), then "Write the summary". Send back any error text (F12 > Console).
+**Still unvalidated:** clock on photos (only a synthetic drawing was tried); eye and speech on live devices; all domain shift (rule 7). Crop-Net did not learn (FINDINGS 3f).
