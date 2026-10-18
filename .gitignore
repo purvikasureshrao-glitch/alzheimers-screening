@@ -33,3 +33,5 @@ data/
 results/split.csv
 results/clock_test_preds.csv
 results/crop_qc.csv
+.env.*
+*.env.txt
