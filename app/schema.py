@@ -4,6 +4,7 @@ Each modality reports a flag from its own method and its own evidence. Nothing i
 from dataclasses import asdict, dataclass, field
 
 ORDER = ("clock", "motor", "eye", "speech")
+NAMES = {"clock": "Clock", "motor": "Motor", "eye": "Eye", "speech": "Speech"}
 STATUSES = ("flagged", "not_flagged", "not_run")
 
 
@@ -15,7 +16,7 @@ class Result:
     measured: dict = field(default_factory=dict)   # what was captured, e.g. {"taps per second": 5.1}
     evidence: str = ""                # the modality's own published/measured evidence, with CI, n and protocol
     caveat: str = ""                  # known limits (domain shift, pilot, unvalidated)
-    counts: bool = True               # False = shown but excluded from the 2-of-4 rule (experimental, e.g. webcam eye)
+    counts: bool = True               # kept for old saved records; every modality is now shown the same way
 
     def __post_init__(self):
         if self.modality not in ORDER:

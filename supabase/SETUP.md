@@ -7,10 +7,10 @@
 
        SUPABASE_URL=https://xxxxxxxx.supabase.co
        SUPABASE_SERVICE_KEY=<service_role key>
-       DOCTOR_USER=<pick a username>
-       DOCTOR_PASSWORD=<pick a password>
 
 5. Restart the app (`run_app.bat`). The yellow banner about Supabase should disappear.
+   **Updating an older project:** open SQL Editor and run the three `alter table doctors add column ...` lines near the bottom of `schema.sql` (needed for the forgot-password feature).
+6. Doctors create their own account on the doctor page ("New doctor? Sign up"); nothing about doctors goes in `.env`. At sign-up the app shows a one-time **recovery code**; with it a doctor can reset a forgotten password ("Forgot password?"). An account made before recovery codes existed: log in, then use "Get a new recovery code".
 
 Notes
 - The service_role key gives full access. Keep it only in `.env`; never paste it in the browser, chat, or git. The browser never sees it.

@@ -19,18 +19,19 @@ REF = {"tps": {"intercept": 6.3, "slope_per_year": -0.0187, "res_p5": -1.17, "re
 
 
 class Combine(unittest.TestCase):
-    def test_rule_two_of_four(self):
+    def test_states_every_modality(self):
         r = [res("clock", "flagged"), res("motor", "not_flagged"), res("eye", "flagged"), res("speech", "not_run")]
         c = combine(r)
         self.assertTrue(c["follow_up"]); self.assertEqual(c["flagged"], ["clock", "eye"]); self.assertEqual(c["completed"], ["clock", "motor", "eye"])
+        self.assertEqual(c["text"], "Clock: flagged. Motor: not flagged. Eye: flagged. Speech: not completed. 2 of 3 completed screens flagged.")
 
-    def test_one_flag_no_follow_up(self):
+    def test_one_flag(self):
         self.assertFalse(combine([res(m, "flagged" if m == "eye" else "not_flagged") for m in ORDER])["follow_up"])
 
-    def test_no_accuracy_or_score(self):
+    def test_no_rule_talk_or_score(self):
         c = combine([res(m, "flagged") for m in ORDER])
-        self.assertNotIn("score", json.dumps(c).lower().replace("no accuracy", ""))
-        self.assertIn("no accuracy claim", c["text"])
+        for word in ("rule", "accuracy", "experimental", "counted", "score"):
+            self.assertNotIn(word, c["text"].lower())
 
 
 class Motor(unittest.TestCase):
@@ -45,6 +46,20 @@ class Motor(unittest.TestCase):
             taps.append(t); t += 0.45 + (0.25 if len(taps) % 2 else 0) + t * 0.02    # slow, irregular, slowing
         self.assertEqual(motor.score(taps, 70, REF).status, "flagged")
 
+    def test_slow_taps_flagged_on_their_own(self):
+        taps = [0.8 + i * 0.5 for i in range(58)]             # 2 taps/s, perfectly steady: below the healthy range for a 70-year-old
+        r = motor.score(taps, 70, REF)
+        self.assertEqual(r.status, "flagged"); self.assertIn("slower", r.label)
+
+    def test_taps_faster_than_healthy_never_flagged(self):
+        from motor import reference
+        t, taps, i = 0.2, [], 0
+        while t < 30:
+            taps.append(t); t += ([0.03, 0.03, 0.25] if t < 20 else [0.08, 0.08, 0.5])[i % 3]; i += 1     # ~9 taps/s, uneven, fading
+        self.assertTrue(reference.flag(reference.trial_features(taps), 30, REF))      # the old 2-of-3 rule flagged this
+        r = motor.score(taps, 30, REF)
+        self.assertEqual(r.status, "not_flagged"); self.assertIn("faster", r.label)
+
     def test_too_few_taps_not_run(self):
         self.assertEqual(motor.score([1.0, 2.0, 3.0], 70, REF).status, "not_run")
 
@@ -53,7 +68,7 @@ class Summary(unittest.TestCase):
     def setUp(self):
         self.r = [res(m, "not_flagged") for m in ORDER]
         self.c = combine(self.r)
-        self.good = json.dumps({"modalities": {m: f"{m}: evidence 0.5, caveat noted, value 1.5." for m in ORDER}, "overall": self.c["text"]})
+        self.good = json.dumps({"modalities": {m: f"{m}: flagged status checked, value 1.5." for m in ORDER}, "overall": self.c["text"]})
 
     def test_good_reply_accepted(self):
         self.assertEqual(summarize(self.r, post=lambda *a: self.good)["source"], "llama3.1:8b")
@@ -159,10 +174,9 @@ class Eye(unittest.TestCase):
         order = self.eye._session()["order"]
         self.assertTrue(all(self.np.isnan(v) for c, v in zip(order, vec) if "disconj" in c))
 
-    def test_result_is_experimental_and_not_counted(self):
+    def test_result_label_is_plain(self):
         r = self.eye.score(self.tasks())
-        self.assertIn(r.status, ("flagged", "not_flagged")); self.assertFalse(r.counts)
-        self.assertIn("features measured (of 30)", r.measured); self.assertIn("Experimental", r.label)
+        self.assertIn(r.status, ("flagged", "not_flagged")); self.assertIn("features measured (of 30)", r.measured); self.assertNotIn("Experimental", r.label)
 
     def test_too_little_gaze_is_not_run(self):
         self.assertEqual(self.eye.score({}).status, "not_run")
@@ -170,19 +184,15 @@ class Eye(unittest.TestCase):
 
     def test_route(self):
         code, d = handle("/api/eye", {"tasks": self.tasks()})
-        self.assertEqual((code, d["modality"], d["counts"]), (200, "eye", False))
+        self.assertEqual((code, d["modality"]), (200, "eye"))
 
 
-class EyeNotCounted(unittest.TestCase):
-    def test_eye_flag_excluded_from_rule(self):
-        eye = Result("eye", "flagged", "x", counts=False)
-        c = combine([res("clock", "flagged"), res("motor", "not_flagged"), eye, res("speech", "not_run")])
-        self.assertEqual(c["flagged"], ["clock"]); self.assertFalse(c["follow_up"]); self.assertEqual(c["excluded"], ["eye"])
-        self.assertIn("not counted", c["text"])
-
-    def test_two_counted_flags_still_trigger(self):
-        eye = Result("eye", "flagged", "x", counts=False)
-        self.assertTrue(combine([res("clock", "flagged"), res("motor", "flagged"), eye, res("speech", "not_run")])["follow_up"])
+class EyeWindow(unittest.TestCase):
+    def test_only_first_300_ms_are_scored(self):
+        from app import eye
+        t = [i * 100.0 for i in range(31)]                    # a 3 s recording at 10 Hz
+        out = eye.first_window({"antisaccade1": {"t": t, "x": list(range(31)), "y": [1] * 31}})["antisaccade1"]
+        self.assertEqual(out["t"], [0.0, 100.0, 200.0, 300.0]); self.assertEqual(out["x"], [0, 1, 2, 3])
 
 
 class Speech(unittest.TestCase):
@@ -197,10 +207,10 @@ class Speech(unittest.TestCase):
         f = features_from_words(w, 10)
         self.assertEqual([round(v, 3) for v in f[:4]], [1.0, 0.0, 1.0, 1.0]); self.assertGreater(f[4], 0)
 
-    def test_too_few_words_is_not_run_and_not_counted(self):
+    def test_too_few_words_is_not_run(self):
         from app import speech
         r = speech.score_words(self.words(5), 60)
-        self.assertEqual((r.status, r.counts), ("not_run", False))
+        self.assertEqual(r.status, "not_run")
 
     def test_unreadable_audio_is_not_run(self):
         from app import speech
@@ -208,20 +218,20 @@ class Speech(unittest.TestCase):
         with mock.patch.object(speech, "transcribe", side_effect=RuntimeError("bad audio")):
             self.assertEqual(speech.score(b"not audio").status, "not_run")
 
-    def test_model_result_is_experimental(self):
+    def test_model_result_label_is_plain(self):
         from app import speech
         if not (speech.MODELS / "speech_whisper.onnx").exists():
             self.skipTest("models/speech_whisper.onnx not exported yet (Colab: notebooks/speech_live_export.ipynb)")
         r = speech.score_words(self.words(80), 60)
-        self.assertIn(r.status, ("flagged", "not_flagged")); self.assertFalse(r.counts); self.assertIn("Experimental", r.label)
+        self.assertIn(r.status, ("flagged", "not_flagged")); self.assertNotIn("Experimental", r.label)
 
 
 class SummaryOverall(unittest.TestCase):
-    def test_overall_is_always_the_rule_text(self):
+    def test_overall_is_always_the_fixed_text(self):
         rs = [res(m, "flagged" if m == "clock" else "not_flagged") for m in ORDER]
         reply = json.dumps({"modalities": {m: "ok" for m in ORDER}, "overall": "Everything looks fine."})
         out = summarize(rs, post=lambda url, payload, timeout: reply)
-        self.assertEqual(out["source"], "llama3.1:8b"); self.assertIn("no accuracy claim", out["overall"])
+        self.assertEqual(out["source"], "llama3.1:8b"); self.assertIn("Clock: flagged", out["overall"])
         self.assertNotIn("Everything looks fine", out["overall"])
 
 
@@ -234,8 +244,8 @@ class Status(unittest.TestCase):
     def test_page_has_four_steps_in_order(self):
         from pathlib import Path
         html = (Path(__file__).resolve().parent.parent / "app" / "static" / "index.html").read_text(encoding="utf-8")
-        i = html.index('const ORDER = ["clock", "motor", "eye", "speech"]')
-        self.assertGreater(i, 0)
+        js = (Path(html_path := Path(__file__).resolve().parent.parent / "app" / "static" / "app.js")).read_text(encoding="utf-8")
+        self.assertIn('const ORDER = ["clock", "motor", "eye", "speech"]', js)
         steps = [html.index('id="step-' + m) for m in ("clock", "motor", "eye", "speech")]
         self.assertEqual(steps, sorted(steps))   # patient steps appear in the order Clock > Motor > Eye > Speech
 

@@ -1,8 +1,9 @@
-// EXPERIMENTAL webcam eye test (see app/eye.py for why the result is not counted). Everything runs in this page; no frame leaves the computer.
+// Webcam eye test. Everything runs in this page; no frame leaves the computer.
 // MediaPipe Face Landmarker (vendored in /static/vendor) gives iris + eye-corner landmarks; a 9-point calibration maps them to screen pixels.
-// Stimuli are ours: the dataset does not publish its stimuli (FINDINGS 6). Each task is recorded for 300 ms from stimulus onset to match the
-// ~0.3 s recordings the model was trained on, which at webcam rate is only ~9 samples.
-const REC_MS = 300;
+// Stimuli are ours: the dataset does not publish its stimuli (FINDINGS 6). Each picture now stays up and is recorded for 3 s so it can be seen
+// properly and the doctor can replay the gaze path; the server scores only the first 300 ms after onset (app/eye.py WINDOW_MS), the window the
+// model was trained on, which at webcam rate is only ~9 samples.
+const REC_MS = 3000;
 
 async function loadLandmarker() {
   const { FaceLandmarker, FilesetResolver } = await import("/static/vendor/vision_bundle.mjs");
@@ -51,6 +52,8 @@ export async function startEyeTest(onDone, onMsg) {
   const dot = (x, y, c = "#d00", r = 14) => { const d = document.createElement("div"); d.style.cssText = `position:absolute;left:${x - r}px;top:${y - r}px;width:${2 * r}px;height:${2 * r}px;border-radius:50%;background:${c}`; ov.append(d); };
   const text = (s, x, y, size = 30) => { const d = document.createElement("div"); d.textContent = s; d.style.cssText = `position:absolute;left:${x}px;top:${y}px;font-size:${size}px;transform:translate(-50%,-50%)`; ov.append(d); };
   const wait = ms => new Promise(r => setTimeout(r, ms));
+  // instruction, then a 3-2-1 countdown, so the 300 ms recorded screen is expected (the 300 ms itself is the dataset's protocol and is not changed)
+  const ready = async t => { say(t + " Each screen stays for 3 seconds - get ready."); await wait(4500); for (const n of [3, 2, 1]) { ov.innerHTML = ""; text(String(n), W / 2, H / 2, 72); await wait(1000); } ov.innerHTML = ""; };
 
   let alive = true, lastVT = -1, rec = null;
   (function loop() {
@@ -82,23 +85,22 @@ export async function startEyeTest(onDone, onMsg) {
   const grab = async name => { const s = await record(REC_MS); const t0 = s.length ? s[0].t : 0; out[name] = { t: s.map(q => q.t - t0), x: s.map(q => gaze(q.f)[0]), y: s.map(q => gaze(q.f)[1]) }; };
 
   // 2. antisaccade: look to the side OPPOSITE the dot
-  say("Look at the cross. When a dot appears, look at the opposite side."); await wait(2500);
-  ov.innerHTML = ""; text("+", W / 2, H / 2, 48); await wait(1000);
+  await ready("Look at the cross. When a dot appears, look at the OPPOSITE side.");
+  text("+", W / 2, H / 2, 48); await wait(1000);
   dot(Math.random() < 0.5 ? 0.15 * W : 0.85 * W, H / 2); await grab("antisaccade1"); ov.innerHTML = ""; await wait(500);
 
   // 3. visual attention: free viewing of a scattered scene
-  say("Look at the picture freely."); await wait(2000);
-  ov.innerHTML = "";
+  await ready("A picture with coloured dots will appear. Look at it freely.");
   [[.2, .3], [.7, .25], [.4, .6], [.8, .7], [.25, .8], [.55, .4]].forEach(([a, b], i) => dot(a * W, b * H, ["#d00", "#06c", "#090", "#c80", "#808", "#099"][i], 30));
   await grab("visual_attention1"); ov.innerHTML = ""; await wait(500);
 
   // 4. visual search: find the one T among L's
-  say("Find the letter T among the L's."); await wait(2000);
-  ov.innerHTML = ""; const tAt = Math.floor(Math.random() * 20);
+  await ready("A grid of letters will appear. Find the one T among the L's.");
+  const tAt = Math.floor(Math.random() * 20);
   for (let i = 0; i < 20; i++) text(i === tAt ? "T" : "L", (0.12 + 0.19 * (i % 5)) * W, (0.3 + 0.13 * Math.floor(i / 5)) * H, 40);
   await grab("visual_search1");
 
   stop();
   onMsg(`Done. Mean calibration error ${(cal / W * 100).toFixed(1)}% of screen width.`);
-  await onDone(out, cal / W);
+  await onDone(out, cal / W, [W, H]);
 }

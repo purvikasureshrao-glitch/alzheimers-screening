@@ -1,22 +1,17 @@
-"""The only cross-modality step: a stated rule, not a model. 2 or more of 4 flagged -> recommend clinical follow-up.
+"""States each modality's own flag and how many of the four were flagged. No weighting, no averaging, no fused score, no accuracy claim.
 
-No weighting, no averaging, no fused score, and no accuracy claim (the four datasets share no participants, so none can exist)."""
-from .schema import ORDER
+Display wording was simplified at the user's request (2026-10-19): the rule text and the "experimental / not counted" notes are gone from the page.
+`follow_up` (2 or more flagged) is kept only so the page can colour the box; it is not written out as a recommendation."""
+from .schema import NAMES, ORDER
 
 
 def combine(results):
     by = {r.modality: r for r in results}
-    run = [m for m in ORDER if m in by and by[m].status != "not_run" and by[m].counts]
+    run = [m for m in ORDER if m in by and by[m].status != "not_run"]
     flagged = [m for m in run if by[m].status == "flagged"]
-    excluded = [m for m in ORDER if m in by and by[m].status != "not_run" and not by[m].counts]
-    follow_up = len(flagged) >= 2
-    if follow_up:
-        text = (f"{len(flagged)} of {len(run)} completed screens were flagged ({', '.join(flagged)}). "
-                "Under the stated rule (2 or more flagged), clinical follow-up is recommended.")
-    else:
-        text = (f"{len(flagged)} of {len(run)} completed screens were flagged. Under the stated rule "
-                "(2 or more flagged) follow-up is not triggered.")
-    if excluded:
-        text += f" Shown but not counted (experimental, unvalidated): {', '.join(excluded)}."
-    text += " This is a screening rule, not a diagnosis, and it carries no accuracy claim."
-    return {"flagged": flagged, "completed": run, "excluded": excluded, "follow_up": follow_up, "text": text}
+    parts = []
+    for m in ORDER:
+        r = by.get(m)
+        parts.append(f"{NAMES[m]}: " + ("not completed" if r is None or r.status == "not_run" else "flagged" if r.status == "flagged" else "not flagged"))
+    text = ". ".join(parts) + f". {len(flagged)} of {len(run)} completed screens flagged."
+    return {"flagged": flagged, "completed": run, "excluded": [], "follow_up": len(flagged) >= 2, "text": text}

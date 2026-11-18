@@ -15,7 +15,7 @@ from .schema import ORDER, Result
 from .summary import summarize
 
 STATIC = Path(__file__).resolve().parent / "static"
-TYPES = {".js": "text/javascript", ".mjs": "text/javascript", ".wasm": "application/wasm", ".task": "application/octet-stream"}
+TYPES = {".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".js": "text/javascript", ".mjs": "text/javascript", ".wasm": "application/wasm", ".task": "application/octet-stream"}
 LABEL_NOT_RUN = {"clock": "Clock drawing: not run yet", "motor": "Finger tapping: not run yet",
                  "eye": "Eye movement: not run yet", "speech": "Speech: not run yet"}
 
@@ -64,12 +64,26 @@ def handle(path, body):
     if path == "/api/save":
         store.save_screening(db(), body["code"], body["results"], body.get("combined"), body.get("summary"), body.get("clock_jpeg"))
         return 200, {"saved": True, "where": db().name}
-    if path == "/api/doctor/login":
-        t = store.doctor_login(str(body.get("user", "")), str(body.get("password", "")))
-        return (200, {"token": t}) if t else (401, {"error": "wrong username or password, or no doctor account set in .env"})
+    if path in ("/api/doctor/login", "/api/doctor/signup", "/api/doctor/reset"):
+        g = lambda k: str(body.get(k, ""))
+        try:
+            if path.endswith("login"):
+                r = store.doctor_login(db(), g("user"), g("password"))
+                return (200, {"token": r[0], "name": r[1]}) if r else (401, {"error": "wrong username or password"})
+            if path.endswith("signup"):
+                t, code = store.doctor_signup(db(), g("user"), g("password"), g("full_name"), body.get("confirm"))
+                return 200, {"token": t, "recovery_code": code, "name": g("full_name").strip()}
+            t, code = store.doctor_reset(db(), g("user"), g("recovery_code"), g("password"), body.get("confirm"))
+            return 200, {"token": t, "recovery_code": code}
+        except PermissionError as e:
+            return 429, {"error": str(e)}
+        except ValueError as e:
+            return 400, {"error": str(e)}
     if path.startswith("/api/doctor/"):
         if not store.doctor_ok(body.get("token")):
             return 401, {"error": "please log in again"}
+        if path == "/api/doctor/new_recovery":
+            return 200, {"recovery_code": store.doctor_new_recovery(db(), body.get("token"))}
         if path == "/api/doctor/search":
             return 200, {"patients": db().search(str(body.get("q", "")))}
         if path == "/api/doctor/record":
@@ -119,8 +133,10 @@ class H(BaseHTTPRequestHandler):
         try:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
             self._send(*handle(self.path, body))
-        except (KeyError, ValueError) as e:
-            self._send(400, {"error": f"bad request: {e}"})
+        except ValueError as e:     # e.g. a missing questionnaire answer: the message is written for the page
+            self._send(400, {"error": str(e)})
+        except KeyError as e:
+            self._send(400, {"error": f"bad request: missing {e}"})
         except RuntimeError as e:   # storage failure (e.g. Supabase rejected the request)
             self._send(502, {"error": str(e)})
         except Exception as e:      # never drop the connection: the page would only say "Failed to fetch"

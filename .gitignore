@@ -5,9 +5,6 @@ Paper/
 # Trained model artifacts — come from Colab/Kaggle, not git
 models/
 
-# Vendored MediaPipe (13 MB, re-downloadable: see SESSION_LOG 2026-10-18 eye)
-app/static/vendor/
-
 # Python
 .venv/
 venv/
@@ -36,5 +33,9 @@ results/crop_qc.csv
 .env.*
 *.env.txt
 
-# Cookie Theft picture: licence unconfirmed, keep out of git
-app/static/cookie_theft.*
+
+# Not for the repo: big outputs, personal/college files, the models bundle (shared as a GitHub Release file instead)
+output/
+College/
+release/
+models.zip

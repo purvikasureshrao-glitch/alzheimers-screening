@@ -1,0 +1,133 @@
+ALZHEIMER'S MULTIMODAL SCREENING - PROJECT GIST (as of 2026-10-22)
+====================================================================
+
+1. WHAT THE PROJECT IS
+----------------------
+A laptop-based screening tool made of FOUR INDEPENDENT tests. Each has its own
+paper, dataset, labels and metrics. Results are never fused into one score.
+A local LLM writes a short plain-language summary for the clinician at the end.
+
+Display order everywhere: Clock -> Motor -> Eye -> Speech.
+
+Method for every test:
+  Paper -> Dataset -> Published protocol -> Published method -> Our implementation
+  Every deviation from the paper is flagged as [OURS].
+
+Hard rules:
+  - No fusion, no overall accuracy. Only rule: "2+ of 4 flagged -> recommend follow-up".
+  - No diagnosis, no invented thresholds, no invented severity/stages.
+  - All training on Colab (Kaggle was dropped: uploads failed, NHATS terms). Nothing ML on the local PC.
+  - NHATS data never goes to Claude, Kaggle or any AI assistant (Conditions of Use).
+  - Every metric reported with 95% CI, n and CV protocol; balanced accuracy is the headline.
+  - Domain shift (research data vs. laptop capture) must be validated before any patient claim.
+
+
+2. THE FOUR TESTS
+-----------------
+CLOCK DRAWING
+  Paper    : Bone et al. 2025 (vision transformer on clock drawing test)
+  Data     : NHATS, 54,027 clock images (exact match to paper); labels from public survey files
+  Method   : name-box removal -> Crop-Net crop -> ViT-B/16 (paper used L/16) -> dementia yes/no
+  Result   : test n=1089 people, balanced accuracy 0.654 (0.605-0.707), AUC 0.707
+  Caveats  : Crop-Net did not learn (val error constant, 90% crops touch border);
+             app uses mouse-drawn clocks / photos = domain shift, unvalidated
+  Status   : improvement notebook (plain crop, mouse augmentation) built, awaiting Colab run
+
+MOTOR (FINGER TAPPING)
+  Paper    : Koppelmans et al. 2023 (Balanced Random Forest, CN/aMCI/AD)
+  Data     : none public; authors did not reply
+  Method   : fallback = Lima 2024 healthy reference, age-adjusted, 30 s tapping, no training
+  Output   : "slow = flagged"; faster than healthy never flagged; clearly NOT an AD result
+  Caveats  : young reference, age confound, sensitivity unknown
+
+EYE MOVEMENT
+  Paper    : none usable (title was the Zenodo dataset record)
+  Data     : ADEM_TEST, 10 AD + 10 NC, ~333 Hz tracker, 3 tasks fixed in advance
+  Method   : [OURS] adaptive velocity threshold -> eye features -> logistic regression
+  Result   : leave-one-subject-out n=20, balanced accuracy 0.300 (0.101-0.505) = inconclusive pilot
+  Caveats  : detector found 0 saccades in 28/60 recordings; webcam (~30 Hz, MediaPipe +
+             9-point calibration) vs 333 Hz tracker = big domain shift, unvalidated
+
+SPEECH
+  Paper    : Sarawgi et al. 2020 (Interspeech), ADReSS dataset (54 AD + 54 control)
+  Method   : disfluency MLP + acoustic MLP (+ interventions LSTM) -> vote
+  Result   : 5-fold CV n=108: ensemble 0.759 (0.675-0.834); human transcripts
+  Live use : needs Whisper transcripts -> 5-feature model 0.639 (small), 0.556 (medium, CI incl. 0.5)
+  Status   : improvement notebook run; candidates B+ 0.750, E_B 0.713 vs baseline 0.611 (5x5 CV);
+             by stability rule only E_B qualifies; no winner chosen yet. Test labels not available.
+
+
+3. WHAT IS BUILT
+----------------
+  - Python code per modality (clock/, motor/, eye/, speech/, common/), tests (~40 pass)
+  - Colab notebooks (one per modality + improvement notebooks), bundles uploaded per session
+  - ONNX models with parity checks: clock_vit, clock_cropnet, eye_flag, speech_whisper
+  - Local app (app/, Python stdlib server, 127.0.0.1:8765, run_app.bat):
+      Patient flow : landing -> questionnaire -> clock (mouse canvas) -> motor (30 s taps)
+                     -> eye (webcam) -> speech (Cookie Theft, mic + Whisper) -> summary
+      Doctor flow  : login (lockout, recovery code) -> search by name/ID -> replay clock,
+                     gaze path, audio, tap chart
+      Storage      : Supabase (service key in .env), local JSON fallback
+      Summary      : Ollama llama3.1:8b, JSON-schema validated, fixed-template fallback
+      UI           : redesigned, dark/light toggle
+  - College report Ch 3-5 drafted (46 pages, Word, report/)
+
+
+4. TIMELINE (for diary entries)
+-------------------------------
+  09-30  Project setup; papers read; FINDINGS + PLAN written; four-modality design
+  10-01  NHATS labels verified (54,027 images); supplement read; crop QC option chosen
+  10-07/08 Plan finalised: all ML in cloud, ONNX, laptop-only deployment; negative codes verified
+  10-09  Crop-Net layers read from Figure 1; scaffold + Speech code
+  10-10  Commit; TalkBank terms; Eye code
+  10-12  Clock label/split/preprocess; Motor code; platform decisions (Colab only, no Drive);
+         notebooks merged to four; Eye pilot run (inconclusive)
+  10-17  Speech run on Colab (0.759); ONNX exports; Whisper checks (0.639 / 0.556);
+         Speech closed as research-only; Eye ONNX; Clock part A done; Lima motor reference
+  10-18  Clock full run (0.654); Motor on Lima protocol; app skeleton; eye webcam path;
+         speech live path; Ollama set up; frontend; patient/doctor flow; commit e7798ba
+  10-19  Supabase live; full browser self-check
+  10-20  UI redesign + requested changes; speech + clock improvement notebooks built;
+         clock Colab upload fix; report Ch 3-5 drafted
+  10-21/22 Resume: run improvement notebooks on Colab, device test
+
+
+5. KEY DECISIONS AND WHY
+------------------------
+  - Public NHATS labels used -> no hand annotation of clock images
+  - Cloud-only ML (Colab) -> local PC blocked for ML (Smart App Control, no GPU)
+  - No Drive, upload per session -> Drive full
+  - Speech live = Whisper features, not human transcripts -> no typed transcript in real use
+  - Motor via healthy reference -> no labelled dataset exists
+  - Keep Crop-Net as trained, flag as limitation (user choice) -> avoid a multi-hour retrain
+  - Eye/Speech shown as ordinary flags in UI (user wish); evidence kept under "About this measure"
+  - Only switch app models if a pre-registered selection rule says a winner qualifies
+
+
+6. OPEN ITEMS
+-------------
+  1. Run speech_improve and clock_improve notebooks on Colab; apply selection rule
+  2. Device test: webcam eye, microphone speech, doctor login with real password
+  3. Supabase: delete test patients (screenings rows first), regenerate service_role key,
+     run ALTER lines, new doctor recovery code
+  4. Validate domain shift (mouse clock, webcam eye, mic speech) - rule 7
+  5. Fill report placeholders; build full report + PPT after final results
+  6. Commit the many uncommitted files
+
+
+7. WEEKLY UPDATE TEMPLATE
+-------------------------
+  Week of: ____ to ____
+  Goal for the week:
+  Done:
+    -
+  Results / numbers (with 95% CI, n, CV protocol):
+    -
+  Problems / blockers and how handled:
+    -
+  Decisions made (and why):
+    -
+  Plan for next week:
+    -
+  Files / commits touched:
+    -

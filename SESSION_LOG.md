@@ -692,3 +692,54 @@ real hardware), speech 60 s (microphone - never run; Whisper small is cached), t
 **Resume here (2026-10-20, user runs the check):** `run_app.bat` (keep window open) -> full flow incl. webcam eye test and microphone speech test -> doctor login with own credentials -> send any error text (F12 > Console or the red message under a form).
 **Then:** delete test patients in Supabase (Storage Check, Net Test, Test Patient, Auto Test); regenerate the Supabase key; fix whatever the device test finds.
 **Still unvalidated (rule 7):** mouse-drawn clock, webcam eye, microphone speech with the redrawn Cookie Theft picture. Eye and speech are not counted in the 2-of-4 rule.
+
+---
+
+## 2026-10-20 (UI redesign + user-requested changes)
+
+**Asked (user):** patient ID visible; all questionnaire answers required; remove "limits/evidence" and "experimental/not counted" from the pages; simple "X: flagged / not flagged" summary (no rule text); motor flag: slow = flagged, faster than healthy never flagged; eye stimuli 3 s; doctor can replay clock drawing, gaze path, audio, tap chart; forgot-password; nicer UI with dark/light toggle and animated background on sign-up/log-in only.
+**Changed:** `app/combine.py` (text = per-modality flag + "N of M flagged"; `follow_up` kept only for box colour), `app/summary.py` (prompt/template without evidence/caveat), `app/motor.py` (**deviation from `motor/reference.flag`**: slow tps flagged alone; tps above the 95th-percentile never flagged; otherwise 2-of-3 as before; cut-offs unchanged), `app/eye.py` (stimulus recorded 3 s, **only first 300 ms scored** = training window), eye/speech no longer "experimental / not counted", `app/store.py` (required answers, partial-ID search, doctor full name, recovery code + reset, lock-out after 5 wrong tries), `app/static/{index.html,style.css,app.js}` (rewrite; old page in `backups/index_before_redesign.html`), `supabase/schema.sql` (3 new `doctors` columns: run the ALTER lines once). Results now carry an `artifact` (clock preview, tap times, gaze path, audio + transcript) saved in `screenings.results`; transcript is now stored (earlier: page only).
+**Decisions to revisit:** eye and speech now count like clock/motor in the "N flagged" line (user wish); evidence/limits still shown to doctors under "About this measure". 40 tests pass. Page NOT viewed in a browser this session (extension not connected).
+
+---
+
+## 2026-10-20 (speech improvement notebook, not yet run)
+
+**Asked (user):** raise clock and speech accuracy, no extra false alarms, no overfitting. Speech first.
+**Built:** `speech/improve_features.py` (patient-only filtering from CHAT time marks, 11 extended word-based features, picture information units; 5 tests in `tests/test_speech_improve.py`), `scripts/build_speech_improve_nb.py` -> `notebooks/speech_improve.ipynb` (Colab, upload `colab_upload/speech_data.tar` only; code embedded).
+**Pre-registered in the notebook:** 8 candidates (baseline A = today's app path), 5x repeated 5-fold CV, inner-CV regularisation, threshold 0.5, selection rule (specificity >= baseline, stable), paired-bootstrap CI vs baseline, shuffled-label check. CrisperWhisper is optional (may need an HF token; check its licence).
+**Facts found:** all 1,492 *PAR utterances in the 108 train transcripts have time marks, so patient-only audio can be cut. ADReSS test labels are NOT in the folder (`test_results.txt` blank), so no held-out test yet.
+**Not done:** notebook never run on real data (logic smoke-tested on random numbers only). Nothing in the app changed. Clock notebook is next.
+
+---
+
+## 2026-10-20 (clock improvement notebook, not yet run; resume tomorrow 2026-10-21)
+
+**Built:** `clock/improve.py` (plain crop without Crop-Net, mouse-style training augmentation, an independent mouse-style probe, specificity-targeted threshold), `scripts/build_clock_improve_nb.py` -> `notebooks/clock_improve.ipynb` (Colab GPU, NHATS Colab only, no Gemini; code embedded). Uploads: `colab_upload/clock_code.tar`, `clock_data_lean.tar`, `output/clock_models.zip`; optional `my_drawings.zip` (JPEGs from the app).
+**Pre-registered in the notebook:** variants V0 (current), V1 (plain crop + retrained ViT), V2 (V1 + mouse augmentation); same person-grouped split (seed 0); thresholds from validation only at two operating points (BA = today's, SPEC90 = >=90% healthy unflagged); eligibility = specificity >= V0, BA not worse than V0 by >0.02 (paired bootstrap), probed healthy-flag rate <= V0. Probe family differs from the training augmentation. Expect 4-6 h on a T4.
+**Not done:** torch is not installed locally, so the new torch code was only syntax-checked (the notebook starts with a GPU smoke test that fails fast). Nothing in the app changed.
+
+**Resume here (2026-10-21), in this order:**
+1. Run `notebooks/speech_improve.ipynb` on Colab (upload `speech_data.tar`), send back the table + selection output (cells marked SEND BACK).
+2. Run `notebooks/clock_improve.ipynb` on Colab, send back the table + selection output.
+3. I switch the app to a winner ONLY if the rule says supported/eligible (speech: new ONNX + patient-only feature code in `app/speech.py`; clock: plain crop in `app/clock.py` + new threshold). If nothing wins, the app stays as is.
+4. Still open from the UI session: view the new front end in a browser, run the Supabase ALTER lines, get a new recovery code for the existing doctor account, delete test patients in Supabase.
+
+---
+
+## 2026-10-20 (later) — Clock Colab fix, report chapters 3-5 drafted
+**Discussed:** clock notebook upload kept failing (`BadZipFile` on `clock_models.zip`); what is left while the clock run goes; Supabase delete error; college report (Ch 3-5) and PPT.
+**Decided (user):** wait for the clock run and the speech verdict before the full report and PPT. Report format: Word .docx, A4, Times New Roman 12, 1.5 spacing; diagrams drawn as images; Ch 4 results wait for final numbers; comparison with existing work is qualitative plus like-for-like only (no paper headline figures); screenshots as numbered placeholders.
+**Changed:**
+- Local `output/clock_models.zip` tested fine (5 members, no errors), so the Colab copy was corrupted. `colab_upload/clock_models_parts/` = `cropnet_best.pt` and `vit_full_best.pt` split into <=80 MB parts + `manifest.json` (SHA-256). `scripts/build_clock_improve_nb.py` first cell now rejoins and verifies the parts (no zip); `notebooks/clock_improve.ipynb` rebuilt. Not run in Colab by me.
+- New `report/` (untracked): `diagrams.py`, `charts.py`, `eqs.py`, `docbuild.py`, `chapter3.py`, `chapter4.py`, `chapter5.py`, `build_report.py`, `topdf.py`; outputs `Chapter3.docx`, `Chapters_3_to_5.docx` (46 pages: Ch3 28, Ch4 14, Ch5 3), `fig/`. Needs a venv with python-docx, matplotlib, pywin32 (Word used for page counts); the one used was in the session scratchpad.
+- Memory note `report-ppt-plan.md` added.
+- No change to app code, PLAN, FINDINGS or tracked docs.
+**Facts found:** `output/speech_improve_results.zip` table (n=108, 5x5 CV): A 0.611 (0.516-0.700), B 0.667, B+ 0.750 (0.667-0.827), E_B 0.713 (0.623-0.793). By the notebook's stability rule (BA spread <= 0.04) only E_B qualifies (B+ 0.046, B 0.056); the notebook's own paired-bootstrap/shuffled-label output was not seen, so no winner is chosen. `PROJECT_OUTLINE.md` still says WebGazer for eye; the code uses MediaPipe Face Landmarker + 9-point ridge calibration (report follows the code).
+**Open / next (in order):**
+1. User sends the clock Colab results (variant table + selection) and the speech SEND BACK output.
+2. Apply the selection rule; change the app and Ch 3 only if a winner qualifies.
+3. User: device test (webcam eye, microphone speech, doctor login with the real password); delete test patients in Supabase (delete `screenings` rows first, then `patients`, because of the foreign key); regenerate the `service_role` key and update `.env`; run the Supabase ALTER lines if not done; new doctor recovery code.
+4. Fill the yellow placeholders in Ch 4/5 (clock V0/V1/V2, speech verdict, device test, 12 screenshots, one sentence in the Ch 5 conclusion).
+5. User sends the previous document + report rules; then build the full report and the PPT. User also has other tasks to hand over.
+6. Many files are still uncommitted (app, notebooks, `clock/improve.py`, `report/`); commit when asked.

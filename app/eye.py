@@ -1,10 +1,11 @@
-"""Eye (EXPERIMENTAL): webcam gaze samples -> eye.features.extract -> eye_flag.onnx -> Result (never counted in the 2-of-4 rule).
+"""Eye: webcam gaze samples -> eye.features.extract -> eye_flag.onnx -> Result.
 
 The model was trained on ~333 Hz research-tracker recordings (FINDINGS 1, 8b). A webcam cannot supply what it expects:
  - left/right eye gaze separately -> disconj_x/y are left missing (NaN), not faked as 0;
  - saccade timing at 333 Hz -> ~9 samples per 0.3 s task, so saccade features are mostly NaN (the model's imputer fills them);
  - the training tracker's pixel units are unpublished, so amplitude / velocity / spread are in browser-screen pixels [OURS, unmatched].
-The output is therefore labelled experimental and excluded from the rule. How many of the 30 features were measured is shown.
+The page now shows each stimulus for 3 s and records all of it (the doctor can replay the gaze path), but only the first 300 ms after onset go to the
+model, because that is the window it was trained on (WINDOW_MS). How many of the 30 features were measured is shown.
 """
 import json
 from pathlib import Path
@@ -17,6 +18,7 @@ from .evidence import CAVEAT, EVIDENCE
 from .schema import Result
 
 MODELS = Path(__file__).resolve().parent.parent / "models"
+WINDOW_MS = 300
 _S = {}
 
 
@@ -49,21 +51,32 @@ def feature_vector(tasks):
     return [row[c] for c in _session()["order"]], kept
 
 
+def first_window(tasks):
+    """Keep only samples within WINDOW_MS of each task's first sample (the protocol the model was trained on)."""
+    out = {}
+    for k, d in (tasks or {}).items():
+        t = np.asarray(d.get("t", []), float)
+        n = len(t)
+        m = (t - t[0] <= WINDOW_MS) if n else np.zeros(0, bool)
+        out[k] = {a: [v for v, ok in zip(d.get(a, [])[:n], m) if ok] for a in ("t", "x", "y")}
+    return out
+
+
 def score(tasks, calibration_pct=None):
     try:
-        vec, kept = feature_vector(tasks)
+        vec, kept = feature_vector(first_window(tasks))
     except Exception:
-        return Result("eye", "not_run", "Eye test could not be read", evidence=EVIDENCE["eye"], caveat=CAVEAT["eye"], counts=False)
+        return Result("eye", "not_run", "Eye test could not be read", evidence=EVIDENCE["eye"], caveat=CAVEAT["eye"])
     measured_n = int(np.isfinite(vec).sum())
     if measured_n == 0 or min(kept.values()) < 4:
         return Result("eye", "not_run", "Eye test: too little gaze was captured", measured={"gaze samples per task": kept},
-                      evidence=EVIDENCE["eye"], caveat=CAVEAT["eye"], counts=False)
+                      evidence=EVIDENCE["eye"], caveat=CAVEAT["eye"])
     label = _session()["ort"].run(["label"], {"X": np.asarray([vec], np.float32)})[0][0]
     flagged = int(label) == 1
     return Result(
         "eye", "flagged" if flagged else "not_flagged",
-        "Experimental: gaze pattern resembles the Alzheimer's group in the pilot data" if flagged
-        else "Experimental: gaze pattern does not resemble the Alzheimer's group in the pilot data",
+        "Gaze pattern resembles the Alzheimer's group in the pilot data" if flagged
+        else "Gaze pattern does not resemble the Alzheimer's group in the pilot data",
         measured={"gaze samples per task": kept, "features measured (of 30)": measured_n,
                   **({"calibration error (% of screen width)": round(calibration_pct, 1)} if calibration_pct is not None else {})},
-        evidence=EVIDENCE["eye"], caveat=CAVEAT["eye"], counts=False)
+        evidence=EVIDENCE["eye"], caveat=CAVEAT["eye"])

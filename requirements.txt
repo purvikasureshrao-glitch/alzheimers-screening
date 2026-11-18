@@ -1,0 +1,8 @@
+# Everything needed to RUN the screening app on a laptop (Python 3.13). setup_new_pc.bat installs this for you.
+# Versions are the ones tested on the development PC.
+numpy==2.5.2
+pillow==12.3.0
+onnxruntime==1.31.0
+opencv-python-headless==5.0.0.93
+faster-whisper==1.2.1
+av==16.1.0   # av 17+ breaks faster-whisper 1.2.1, so keep this below 17

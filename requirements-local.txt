@@ -10,3 +10,4 @@ pillow
 onnxruntime
 opencv-python-headless
 faster-whisper
+av>=14,<17   # av 17+ breaks faster-whisper 1.2.1 ("unexpected keyword argument metadata_errors"), which made every recording fail

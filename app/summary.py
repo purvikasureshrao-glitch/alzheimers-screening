@@ -19,20 +19,33 @@ SCHEMA = {"type": "object", "additionalProperties": False, "required": ["modalit
                          "overall": {"type": "string"}}}   # passed to Ollama as `format`: the shape is enforced, the wording still validated
 
 
+def _measured(r):
+    vals = [f"{k}: {v if not isinstance(v, (list, dict)) else (', '.join(map(str, v)) if isinstance(v, list) else ', '.join(f'{a} {b}' for a, b in v.items())) or 'none'}"
+            for k, v in r.measured.items()]
+    return ("Measured: " + "; ".join(vals) + ".") if vals else ""
+
+
+def _plain(r):
+    d = r.to_dict()
+    for k in ("evidence", "caveat", "counts"):
+        d.pop(k, None)
+    return d
+
+
 def template(results, combo):
     by = {r.modality: r for r in results}
     parts = {}
     for m in ORDER:
         r = by.get(m)
-        parts[m] = "Not run." if r is None or r.status == "not_run" else f"{r.label}. {r.evidence} {r.caveat}"
+        parts[m] = "Not completed." if r is None or r.status == "not_run" else f"{r.label}. " + _measured(r)
     return {"modalities": parts, "overall": combo["text"], "source": "template"}
 
 
 def build_prompt(results, combo):
-    data = {"results": [r.to_dict() for r in results], "rule_outcome": combo}
+    data = {"results": [_plain(r) for r in results], "outcome": {"flagged": combo["flagged"], "text": combo["text"]}}
     return ("You write a short plain-language note for a clinician from the structured screening results below. "
             "Rules: restate only what is in the data; one short paragraph per modality in the order clock, motor, eye, speech; "
-            "do not diagnose, name stages or severity, add numbers, or combine modalities into one score; mention each caveat. "
+            "do not diagnose, name stages or severity, add numbers, or combine modalities into one score; for each modality say whether it was flagged and give its measured values. "
             "Reply with JSON only: {\"modalities\": {\"clock\": str, \"motor\": str, \"eye\": str, \"speech\": str}, \"overall\": str}.\n\n"
             + json.dumps(data, indent=1))
 
@@ -52,7 +65,7 @@ def validate(reply, results, combo):
     joined = " ".join(texts)
     if BANNED.search(re.sub(r"(not an?|no) diagnos\w*", "", joined, flags=re.I)):   # the rule text itself says "not a diagnosis"
         raise ValueError("diagnostic, staging or fusion wording")
-    allowed = _numbers(json.dumps([r.to_dict() for r in results]) + json.dumps(combo))
+    allowed = _numbers(json.dumps([_plain(r) for r in results]) + json.dumps(combo))
     extra = _numbers(joined) - allowed
     if extra:
         raise ValueError(f"numbers not in the input: {sorted(extra)}")
@@ -69,7 +82,7 @@ def summarize(results, model="llama3.1:8b", url="http://localhost:11434/api/gene
     try:
         reply = post(url, {"model": model, "prompt": build_prompt(results, combo), "stream": False, "format": SCHEMA}, timeout)
         d = validate(reply, results, combo)
-        d["overall"] = combo["text"]   # the rule outcome is fixed text, never model-written (it carries the "no accuracy claim" line)
+        d["overall"] = combo["text"]   # the outcome line is fixed text, never model-written
         d["source"] = model
         return d
     except Exception as e:  # unreachable model, invalid JSON, or a rule violation: fall back, never show the model's text
