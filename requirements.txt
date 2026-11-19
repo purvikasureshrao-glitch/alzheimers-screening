@@ -2,6 +2,7 @@
 # Versions are the ones tested on the development PC.
 numpy==2.5.2
 pillow==12.3.0
+scipy==1.18.1
 onnxruntime==1.31.0
 opencv-python-headless==5.0.0.93
 faster-whisper==1.2.1
