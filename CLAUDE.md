@@ -1,6 +1,6 @@
 # CLAUDE.md — Alzheimer's Multimodal Screening
 
-Read this first every session, then read the latest entries in `SESSION_LOG.md`.
+Read this first every session. The `project/` folder explains how the app works.
 
 ## What this project is
 
@@ -12,10 +12,7 @@ summarises the four results as prose for clinician review at the end.
 
 | File | Purpose |
 |---|---|
-| `PROJECT_OUTLINE.md` | Per-modality design: paper → dataset → protocol → model → our implementation |
-| `PLAN.md` | Evidence-based implementation plan, build order (section C), settled decisions (section D) |
-| `FINDINGS.md` | Facts measured from data or read from papers. Nothing assumed |
-| `SESSION_LOG.md` | Dated log of every session: decisions, changes, next steps |
+| `project/` | Plain-language guides: front end, back end, database, each test, summary, sharing |
 | `Paper/` | Source papers (Clock_drawing.pdf, Speech.pdf, DAD2-17-e70171.pdf) |
 | `datasets/` | ADEM_TEST, ADReSS-IS2020-train/test, NHATS |
 | `scripts/` | Local helper scripts (e.g. `check_nhats_labels.py`) |
@@ -35,7 +32,7 @@ summarises the four results as prose for clinician review at the end.
    Nothing ML on the local PC. The finished test runs on a laptop via ONNX models in one
    local app.
 5. **NHATS data must never be uploaded to Claude or any AI platform, nor to Kaggle**
-   (NHATS Conditions of Use, FINDINGS 3c). Write scripts the user runs (locally or in
+   (NHATS Conditions of Use). Write scripts the user runs (locally or in
    their own Colab notebook, files uploaded per session); only aggregate summaries come
    back.
 6. Report every metric with its 95% CI, n and CV protocol. Balanced accuracy is the
@@ -48,15 +45,6 @@ summarises the four results as prose for clinician review at the end.
 - Windows 11, local Python **3.13** (3.11 is blocked by Smart App Control for new
   native wheels).
 - GPU: Kaggle (~30 free GPU hours/week), Colab fallback. **NHATS (clock): Colab only, uploaded per session
-  (no Drive mount; Drive is full) — never Kaggle, never Colab's Gemini/AI assistant** (FINDINGS 3c).
+  (no Drive mount; Drive is full) — never Kaggle, never Colab's Gemini/AI assistant**.
 - Display order everywhere: Clock → Motor → Eye → Speech.
 - Workflow: plan on Opus, switch to Sonnet (`/model sonnet` — forward slash) for coding.
-
-## Session log workflow
-
-- When the user says **"update the log"** (or similar), append a new dated entry to
-  `SESSION_LOG.md` using the template at the top of that file. Newest entry at the
-  bottom. Do not rewrite older entries.
-- At the start of a session, read the last 1–2 log entries to know where we left off.
-- If a decision in the log changes a doc (`PLAN.md`, `FINDINGS.md`, etc.), update that
-  doc too, and note it in the log entry.

@@ -39,3 +39,7 @@ output/
 College/
 release/
 models.zip
+
+# Keep the template, ignore real secrets
+!.env.example
+*.zip

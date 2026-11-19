@@ -1,6 +1,6 @@
 @echo off
 rem Starts everything: Ollama (for the written summary), the screening app, and the browser. Close this window to stop the app.
-rem First time on a new PC? Run setup_new_pc.bat once (see HOW_TO_RUN.md).
+rem First time on a new PC? Run setup_new_pc.bat once (see project\10_friend_zip_guide.md).
 cd /d "%~dp0"
 set PYTHONPATH=.
 set PY=%~dp0.venv\Scripts\python.exe
@@ -11,7 +11,7 @@ if not exist "%PY%" (
   exit /b 1
 )
 if not exist "models\clock_vit.onnx" (
-  echo The models folder is missing files. Run setup_new_pc.bat, or see HOW_TO_RUN.md step 3.
+  echo The models folder is missing files. Run setup_new_pc.bat, or see project\10_friend_zip_guide.md.
   pause
   exit /b 1
 )

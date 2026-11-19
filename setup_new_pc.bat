@@ -33,12 +33,12 @@ if exist "models\clock_vit.onnx" (
   if exist "models.zip" (
     powershell -NoProfile -Command "Expand-Archive -Force 'models.zip' '.'"
   ) else (
-    if not exist "MODELS_URL.txt" ( echo MODELS_URL.txt is missing. See HOW_TO_RUN.md step 3. & pause & exit /b 1 )
+    if not exist "MODELS_URL.txt" ( echo MODELS_URL.txt is missing. See project\10_friend_zip_guide.md. & pause & exit /b 1 )
     set /p MODELS_URL=<MODELS_URL.txt
     call powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; Invoke-WebRequest -Uri (Get-Content MODELS_URL.txt -TotalCount 1) -OutFile models.zip; Expand-Archive -Force models.zip ."
   )
 )
-if not exist "models\clock_vit.onnx" ( echo Models still missing - see HOW_TO_RUN.md step 3. & pause & exit /b 1 )
+if not exist "models\clock_vit.onnx" ( echo Models still missing - See project\10_friend_zip_guide.md. & pause & exit /b 1 )
 
 rem ---- 4. Speech recognition model (downloads once, ~460 MB) -----------------
 echo [4/5] Downloading the speech model ...
