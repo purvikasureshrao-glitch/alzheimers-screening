@@ -1,1 +1,1 @@
-PASTE-THE-DOWNLOAD-LINK-OF-models.zip-HERE
+https://github.com/purvikasureshrao-glitch/alzheimers-screening/releases/download/v1.0/models.zip
